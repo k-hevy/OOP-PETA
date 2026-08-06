@@ -1,6 +1,5 @@
-
 package OOP;
 
-public class Employee {
+class Employee {
     
 }
