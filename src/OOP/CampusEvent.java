@@ -1,6 +1,4 @@
 package OOP;
-
-package OOP;
 public class CampusEvent {  
     String eventName;
     String venue;
