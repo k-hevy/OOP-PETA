@@ -1,6 +1,22 @@
-
 package OOP.Assignment_3;
+public class CampusEvent {  
+    String eventName;
+    String venue;
+    int maximumParticipants;
+    int registeredParticipants;
 
-public class CampusEvent {
-    
+    CampusEvent(String eventName, String venue, int maximumParticipants){
+     // this.resigeredParticipants = 0;
+
+}
+}
+
+ static void registerParticipant(){
+        
+}
+void cancelRegistration(){
+
+}
+void displayEventDetails(){
+
 }
