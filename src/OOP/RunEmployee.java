@@ -2,6 +2,7 @@ package OOP;
 
 public class RunEmployee {
     public static void main (String[] args){
+        
         Employee per1= new Employee();
         Employee per2= new Employee(102030,"Maria");
         Employee per3= new Employee(301020,"Axel", 14000);
