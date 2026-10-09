@@ -1,0 +1,8 @@
+10/08/2026 - kean
+Created: 
+    - Comment and TicketLogEntry implementation
+    - Ticket: state rules in changeState() and isValidTransition() 
+    - User (abstract) with getRole()
+    - Repository (pure storage)
+    - Empty skeletons (constructors and method stubs) for Requestor, Student, Faculty, SupportAgent and Admin
+    - Tested a sample fo the system
