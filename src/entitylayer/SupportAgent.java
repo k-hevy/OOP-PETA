@@ -22,14 +22,16 @@ public class SupportAgent extends User {
        return "SUPPORTAGENT";
     }
 
-    // SupportAgent(String firstName, String lastName, String email, String password, Repository repository, String employeeId, String specialization, String deskExtension)
-    // String getRole()
     // String getEmployeeId()
     // void setEmployeeId(String employeeId)
-    // String getSpecialization()
+    public String getSpecialization() {
+        return specialization;
+    }
     // void setSpecialization(String specialization)
     // String getDeskExtension()
     // void setDeskExtension(String deskExtension)
+
+
     // Comment createComment(String message)
     // boolean addComment(String ticketId, String message)
     // boolean updateTicketStatus(String ticketId, String newState, String reason)

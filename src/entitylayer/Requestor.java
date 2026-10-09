@@ -1,6 +1,7 @@
 package entitylayer;
 
 import datalayer.Repository;
+import java.util.ArrayList;
 
 
 public class Requestor extends User {
@@ -14,8 +15,12 @@ public class Requestor extends User {
         return "REQUESTOR";
     }
 
-    // void setRepository(Repository repository)
-    // Ticket createTicket(String priority, String category, String description)
+    public Ticket createTicket(String priority, String category, String description) {
+        Ticket ticket = new Ticket("001", this, null, priority, category, description);
+        assignTicket(ticket);
+        return ticket;
+    }
+
     // Comment createComment(String message)
     // boolean submitTicket(Ticket ticket)
     // boolean cancelTicket(String ticketId, String reason)
@@ -26,8 +31,25 @@ public class Requestor extends User {
     // int getSubmittedTicketCount()
     // ArrayList<TicketLogEntry> getTicketHistory(String ticketId)
     // boolean closeTicket(String ticketId, String reason)
-    // private boolean assignTicket(Ticket ticket)
     // private int getActiveTicketCount(SupportAgent supportAgent)
+
+    private boolean assignTicket(Ticket ticket) {
+
+        ArrayList<User> allUSers = getRepository().getAllUsers();
+        
+        for (User user : allUSers) {
+            if (user instanceof SupportAgent) {
+                SupportAgent supportAgent = (SupportAgent) user;
+                if (supportAgent.getSpecialization() != null && 
+                supportAgent.getSpecialization().equalsIgnoreCase(ticket.getCategory())) {
+                    ticket.setAssignedAgent(supportAgent);
+                    return true;
+                }
+            }
+        }
+        return false;
+
+    }
 
 
 }

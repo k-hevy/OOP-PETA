@@ -46,7 +46,10 @@ public class Ticket {
     public void setPriority(String priority) {this.priority = priority;}
     public void setCategory(String category) {this.category = category;}
     public void setDescription(String description) {this.description = description;}
+
+
     public void addComment(Comment comment) {comments.add(comment);}
+
     public boolean changeState(String newState, User changedBy, String reason) {
         String oldState = this.state;
         if (isValidTransition(state, newState)) {
@@ -57,6 +60,7 @@ public class Ticket {
             return false;
         }
     }
+    
     public String getFormattedTicket() {
         return String.format(
             "Ticket ID      : " + getTicketId() + "\n" + 

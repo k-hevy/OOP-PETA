@@ -22,14 +22,13 @@ public class Admin extends User {
        return "ADMIN";
     }
 
-    // Admin(String firstName, String lastName, String email, String password, Repository repository, String employeeId, String managedDepartment, String deskExtension)
-    // String getRole()
     // String getEmployeeId()
     // void setEmployeeId(String employeeId)
     // String getManagedDepartment()
     // void setManagedDepartment(String managedDepartment)
     // String getDeskExtension()
     // void setDeskExtension(String deskExtension)
+    
     // boolean reassignTicket(String ticketId, String agentId)
     // boolean rejectTicket(String ticketId, String reason)
     // ArrayList<User> filterUsers(String field, String value)

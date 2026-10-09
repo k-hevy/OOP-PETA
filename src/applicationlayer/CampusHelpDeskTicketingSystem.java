@@ -23,7 +23,7 @@ public class CampusHelpDeskTicketingSystem {
         System.out.println("Campus Help Desk Ticketing System");
 
         repository = new Repository();
-        input = new Scanner(System.in);
+        // input = new Scanner(System.in);
         //  Login menu here then store User --> call appropriate menu
 
         Requestor requestor = new Requestor("001", "kean", "Danganan", "keandangan", "requestor123", repository);
@@ -45,10 +45,7 @@ public class CampusHelpDeskTicketingSystem {
 
         t1.addComment(new Comment("001", requestor.getUserId(), requestor.getFirstName(), "hello test comment")); // Commenting
         t1.changeState("IN_PROGRESS", supportAgent, "Starting to work on it"); // changing status
-        
-        
-        // System.out.println(t1.changeState("OPEN", supportAgent, "IDK")); // Sample of invalid satte change
-        
+        // System.out.println(t1.changeState("OPEN", supportAgent, "IDK")); // Sample of invalid state change
 
         System.out.println();    
         for (Comment comment : t1.getComments()) {
