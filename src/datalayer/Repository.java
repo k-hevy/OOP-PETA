@@ -8,7 +8,9 @@ public class Repository {
 
     private ArrayList<User> users;
     private ArrayList<Ticket> tickets;
-
+    private int ticketCounter = 0;
+    private int commentCounter = 0;
+    
     public Repository() {
         users = new ArrayList<>();
         tickets = new ArrayList<>();
@@ -34,6 +36,16 @@ public class Repository {
     public void addTicket(Ticket ticket) {
         tickets.add(ticket);
     }
+    
+     public String generateTicketId() {
+        ticketCounter++;
+        return String.format("%03d", ticketCounter);
+   }
+
+   public String generateCommentId() {
+    commentCounter++;
+    return String.format("%03d", commentCounter);
+     }
 
     public Ticket findTicketById(String targetId) {
          for (Ticket ticket : tickets) {
