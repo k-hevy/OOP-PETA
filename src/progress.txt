@@ -6,3 +6,45 @@ Created:
     - Repository (pure storage)
     - Empty skeletons (constructors and method stubs) for Requestor, Student, Faculty, SupportAgent and Admin
     - Tested a sample fo the system
+
+
+
+10/13/2026 - Kean
+
+Roles
+
+Requestor (Student or Faculty): submits tickets, comments, cancels, reopens and closes their own tickets.
+Support Agent: works tickets assigned to them, updates status, changes priority and comments.
+Admin: views everything, filters, reassigns and rejects tickets, and sees the summary report.
+
+Ticket lifecycle: OPEN → IN_PROGRESS → RESOLVED → CLOSED, with CANCELLED as a side exit.
+
+The requestor can cancel (OPEN or IN_PROGRESS), reopen (RESOLVED only) and close (RESOLVED).
+The agent can start work, resolve, or undo a mistaken resolve.
+The admin can reject (OPEN or IN_PROGRESS) and reassign.
+Every state change is logged with who, when and why. Reasons are required.
+
+Rules we locked today
+
+New tickets go to the matching-specialization agent with the fewest active tickets. If none match, the ticket stays unassigned.
+There’s no agent ticket cap, no SLA and no auto-close.
+Requestors choose priority when submitting. Agents can raise or lower it later.
+Comments are blocked on CLOSED and CANCELLED tickets, and admins can’t comment.
+IDs are TK-001 (tickets), CM-001 (comments), LG-001 (log entries), and REQ-, AGT- and ADM- for users.
+
+Code cleanup: we reviewed all the entity classes and fixed bugs in reassign, reject and priority changes. IDs are now generated inside each entity, and the repository only stores data.
+
+Menu layer (built so far)
+
+BaseMenu: the parent of every menu. It runs the console loop (run() / stop()) and handles safe input (readInt, readLine keep asking until the input is valid). It also has truncate(...), which clips long text like FACILITIES_MAINTENANCE so table columns stay aligned.
+Seeder (seedData): fills the app on startup with sample users (admin, agents, a student, a faculty member) plus tickets, comments and history, including edge cases.
+RequestorMenu: the “my tickets” table is done, with aligned columns and names resolved from IDs.
+
+How LoginMenu works
+
+The program starts and seedData loads the sample data.
+LoginMenu asks for a user ID and password.
+It checks them against the users in the repository, and wrong credentials are rejected.
+If valid, it looks at the user’s role and opens the matching menu: Requestor, Support Agent or Admin.
+That role menu runs until the user picks Logout.
+Logout returns to LoginMenu, which shows the login prompt again so someone else can sign in.

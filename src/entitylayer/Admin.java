@@ -1,6 +1,8 @@
 package entitylayer;
 
 import datalayer.Repository;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 public class Admin extends User {
 
@@ -8,35 +10,122 @@ public class Admin extends User {
     private String managedDepartment;
     private String deskExtension;
 
-    public Admin(String userId, String firstName, String lastName, String email, String password, Repository repository, 
-                String employeeId, String managedDepartment, String deskExtension) {
+    public Admin(String userId, String firstName, String lastName, String email, String password, Repository repository, String employeeId, String managedDepartment, String deskExtension) {
         super(userId, firstName, lastName, email, password, repository);
         this.employeeId = employeeId;
         this.managedDepartment = managedDepartment;
         this.deskExtension = deskExtension;
     }
 
-
     @Override
     public String getRole() {
        return "ADMIN";
     }
 
-    // String getEmployeeId()
-    // void setEmployeeId(String employeeId)
-    // String getManagedDepartment()
-    // void setManagedDepartment(String managedDepartment)
-    // String getDeskExtension()
-    // void setDeskExtension(String deskExtension)
-    
-    // boolean reassignTicket(String ticketId, String agentId)
-    // boolean rejectTicket(String ticketId, String reason)
-    // ArrayList<User> filterUsers(String field, String value)
-    // ArrayList<Ticket> filterTickets(String field, String value)
-    // ArrayList<TicketLogEntry> getTicketHistory(String ticketId)
-    // ArrayList<Ticket> getAllTickets()
-    // ArrayList<User> getAllUsers()
-    // HashMap<String, Integer> getSummaryCounts() 
+    @Override
+    public Ticket getTicket(String ticketId) {
+        return getRepository() == null ? null : getRepository().findTicketById(ticketId);
+    }
 
+    // Getters
+    public String getEmployeeId() { return employeeId; }
+    public String getManagedDepartment() { return managedDepartment; }
+    public String getDeskExtension() { return deskExtension;  }
+    
+    // Setters
+    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+    public void setManagedDepartment(String managedDepartment) { this.managedDepartment = managedDepartment; }
+    public void setDeskExtension(String deskExtension) { this.deskExtension = deskExtension; }
+
+    public boolean reassignTicket(String ticketId, String agentId, String reason) {
+        if (agentId == null || reason == null) { return false; }
+        Ticket ticket = getTicket(ticketId);
+        User user = getRepository().findUserById(agentId);
+
+        if (ticket == null ) { return false; }
+        if (!(user instanceof SupportAgent agent)) { return false; }
+        if (agent.getSpecialization() == null) { return false; }
+        if (!agent.getSpecialization().equalsIgnoreCase(ticket.getCategory())) { return false; }
+
+        return ticket.reassignTicket(agent, this, reason);
+    } 
+
+    public boolean rejectTicket(String ticketId, String reason) {
+        Ticket ticket = getTicket(ticketId);
+        if (ticket == null) { return false; }
+        if (!((ticket.getState().equalsIgnoreCase("OPEN") || ticket.getState().equalsIgnoreCase("IN_PROGRESS")))) { return false; }
+        return ticket.changeState("CANCELLED", this, reason);
+    }
+
+    public ArrayList<Ticket> getAllTickets() {
+        ArrayList<Ticket> allTickets = getRepository().getAllTickets();
+        if (allTickets == null) { return new ArrayList<>(); }
+        return allTickets;
+    }
+
+    public ArrayList<User> getAllUsers() {
+        ArrayList<User> allUsers = getRepository().getAllUsers();
+        if (allUsers == null) { return new ArrayList<>(); }
+        return allUsers;
+    }
+
+    public ArrayList<Ticket> filterTickets(String field, String value) {
+        ArrayList<Ticket> result = new ArrayList<>();
+        if (field == null || value == null) { return result; }
+
+        ArrayList<Ticket> allTickets = getAllTickets();
+        for (Ticket ticket : allTickets) {
+            String actual = switch (field.toUpperCase()) {
+                case "ID"        -> ticket.getTicketId();
+                case "STATE"     -> ticket.getState();
+                case "CATEGORY"  -> ticket.getCategory();
+                case "PRIORITY"  -> ticket.getPriority();
+                case "USER"      -> ticket.getSubmittedBy().getUserId();
+                case "AGENT"     -> ticket.getAssignedAgent() == null ? "UNASSIGNED" : ticket.getAssignedAgent().getUserId() ; 
+                default          -> null;
+            };
+            if (actual != null && actual.equalsIgnoreCase(value.trim())) {
+                result.add(ticket);
+            }
+        }
+        return result;
+    }
+
+    public ArrayList<User> filterUsers(String field, String value) {
+        ArrayList<User> result = new ArrayList<>();
+        if (field == null || value == null) { return result; }
+
+        ArrayList<User> allUsers = getAllUsers();
+        for (User user : allUsers ) {
+            if (user == null) { continue; }
+            String actual = switch(field.toUpperCase()) {
+                case "ID"             -> user.getUserId();
+                case "ROLE"           -> user.getRole();
+                case "NAME"           -> user.getFullName();
+                case "SPECIALIZATION" -> user instanceof SupportAgent supportAgent ? supportAgent.getSpecialization() : null;
+                default               -> null;
+            };
+            if (actual  != null && actual.equalsIgnoreCase(value.trim())) {
+                result.add(user);
+            }
+        }
+        return result;
+    }
+
+    public LinkedHashMap<String, Integer> getSummaryCounts() {
+        LinkedHashMap<String, Integer> counts = new LinkedHashMap<>();
+        counts.put("totalTickets", getAllTickets().size()); // TICKET
+        counts.put("totalUsers", getAllUsers().size()); //  / USERS
+       
+        String[] states = {"OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "CANCELLED"};
+        for (String state : states) { counts.put(state, filterTickets("STATE", state).size()); } // States
+        String[] priorities = {"LOW", "MEDIUM", "HIGH", "URGENT"};
+        for (String priority : priorities ) { counts.put(priority, filterTickets("PRIORITY", priority).size()); } // PRIORITY
+        String[] categories = {"FACILITIES_MAINTENANCE", "SOFTWARE_SYSTEMS", "NETWORK", "HARDWARE", "ACCOUNT_SECURITY"};
+        for (String category : categories) { counts.put(category, filterTickets("CATEGORY", category).size()); } // CATEGORY
+
+        counts.put("UnassignedTickets", filterTickets("AGENT", "UNASSIGNED").size()); // Others
+        return counts;
+    }
 
 }

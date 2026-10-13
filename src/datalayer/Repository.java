@@ -6,8 +6,8 @@ import java.util.ArrayList;
 
 public class Repository {
 
-    private ArrayList<User> users;
-    private ArrayList<Ticket> tickets;
+    private final ArrayList<User> users;
+    private final ArrayList<Ticket> tickets;
 
     public Repository() {
         users = new ArrayList<>();
@@ -28,7 +28,7 @@ public class Repository {
     }
 
     public ArrayList<User> getAllUsers() {
-        return users;
+        return new ArrayList<>(users);
     } 
 
     public void addTicket(Ticket ticket) {
@@ -45,9 +45,7 @@ public class Repository {
     }
 
     public ArrayList<Ticket> getAllTickets() {
-        return tickets;
+        return new ArrayList<>(tickets);
     }
 
-
-    
 }

@@ -18,7 +18,6 @@ public Student(String userId, String firstName, String lastName, String email, S
         this.section = section;
     }
 
-
     // getters
     public String getStudentId() { return studentId; }
     public String getProgram() { return program; }
@@ -30,8 +29,5 @@ public Student(String userId, String firstName, String lastName, String email, S
     public void setProgram(String program) {this.program = program;}
     public void setYearLevel(int yearLevel) {this.yearLevel = yearLevel;}
     public void setSection(String section) {this.section = section;} 
-
-    
-
 
 }

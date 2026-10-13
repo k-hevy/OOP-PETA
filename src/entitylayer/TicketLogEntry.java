@@ -1,40 +1,44 @@
 package entitylayer;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class TicketLogEntry {
 
-    private static int  ticketLogCount = 0;
     private String ticketLogEntryId;
     private String previousState;
     private String newState;
     private String changedByUserId;
     private String changedByUserName;
-    private LocalDate timestamp;
+    private LocalDateTime timestamp;
     private String reason;
+    private static  int ticketLogEntryCounter = 0;
 
     public TicketLogEntry(String previousState, String newState, String changedByUserId, String changedByUserName, String reason) {
-        ticketLogCount++;
-        this.ticketLogEntryId = String.valueOf(ticketLogCount);
+        this.ticketLogEntryId = generateTicketLogEntryId();
         this.previousState = previousState;
         this.newState = newState;
         this.changedByUserId = changedByUserId;
         this.changedByUserName = changedByUserName;
-        this.timestamp = LocalDate.now();
+        this.timestamp = LocalDateTime.now();
         this.reason = reason;
     }
 
-    public String getTicketLogId() { return ticketLogEntryId; }
+    public String getTicketLogEntryId() { return ticketLogEntryId; }
     public String getPreviousState() { return previousState; }
     public String getNewState() { return newState; }
     public String getChangedByUserId() { return changedByUserId; }
     public String getChangedByUserName() { return changedByUserName; }
-    public LocalDate getTimestamp() { return timestamp; }
+    public LocalDateTime getTimestamp() { return timestamp; }
     public String getReason() { return reason; }
+
+    private String generateTicketLogEntryId() {
+    ticketLogEntryCounter++;
+        return String.format("LG-%03d", ticketLogEntryCounter);
+    } // called whenever a new log is created
 
     public String getFormattedLogEntry() {
         return "TicketLogEntry {" +
-                "ticketLogId='" + ticketLogEntryId + '\'' +
+                "ticketLogEntryId='" + ticketLogEntryId + '\'' +
                 ", previousState='" + previousState + '\'' +
                 ", newState='" + newState + '\'' +
                 ", changedByUserId='" + changedByUserId + '\'' +
@@ -42,5 +46,6 @@ public class TicketLogEntry {
                 ", timestamp=" + timestamp +
                 ", reason='" + reason + '\'' +
                 '}';
-    }
+    }// will remove soon when UI, remove nalang when may sa UI sa
+
 }

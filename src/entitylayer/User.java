@@ -1,7 +1,8 @@
 package entitylayer;
 
 import datalayer.Repository;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 public abstract class User {
 
@@ -10,7 +11,7 @@ public abstract class User {
     private String lastName;
     private String email;
     private String password;
-    private LocalDate dateRegistered;
+    private LocalDateTime dateRegistered;
     private Repository repository;
 
     public User(String userId, String firstName, String lastName, String email, String password, Repository repository) {
@@ -19,13 +20,13 @@ public abstract class User {
         this.lastName = lastName;
         this.email = email;
         this.password = password;
-        this.dateRegistered = LocalDate.now();
+        this.dateRegistered = LocalDateTime.now();
         this.repository = repository;
     }
 
     // Setters
     public void setFirstName(String firstName) { this.firstName = firstName; }
-    public void setLastname(String lastName) { this.lastName = lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
     public void setEmail(String email) { this.email = email; }
     public void setPassword(String password) { this.password = password; }
 
@@ -36,12 +37,18 @@ public abstract class User {
     public String getFullName() {return firstName + " " + lastName;}
     public String getEmail() { return email; }
     public String getPassword() { return password; }
-    public LocalDate getdateRegsistered() { return dateRegistered; }
-    public Repository getRepository() {return repository;}
+    public LocalDateTime getDateRegistered() { return dateRegistered; }
+    protected Repository getRepository() {return repository;}
+    public ArrayList<TicketLogEntry> getTicketHistory(String ticketId) {
+        Ticket ticket = getTicket(ticketId);
+        return (ticket == null) ? new ArrayList<>() : ticket.getTicketLogEntries(); 
+    }
 
     // Others
-    public boolean checkPassword() {return false;} // for login na to later
+    public boolean checkPassword(String password) { return this.password != null && this.password.equals(password); } 
     public abstract String getRole();
+    public abstract Ticket getTicket(String ticketId);
+    
 
     
 }

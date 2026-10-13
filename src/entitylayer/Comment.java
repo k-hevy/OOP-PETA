@@ -1,32 +1,34 @@
 package entitylayer;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class Comment {
 
     private String commentId;
     private String authorId;
-    private String authorName;
     private String message;
-    private LocalDate timestamp;
+    private LocalDateTime timestamp;
+    private static int commentCounter = 0;
 
-    public Comment(String commentId, String authorId, String authorName, String message) {
-        this.commentId = commentId;
+    public Comment(String authorId, String message) {
+        this.commentId = generateCommentId();
         this.authorId = authorId;
-        this.authorName = authorName;
         this.message = message;
-        this.timestamp = LocalDate.now();
+        this.timestamp = LocalDateTime.now();
     }
 
     public String getCommentId() {return commentId; } 
     public String getAuthorId() {return authorId;}
-    public String getAuthorName() {return authorName;}
     public String getMessage() {return message;}
-    public LocalDate getTimestamp() {return timestamp;}
+    public LocalDateTime getTimestamp() {return timestamp;}
+
+    private String generateCommentId() {
+        commentCounter++;
+        return String.format("CM-%03d", commentCounter);
+    } // called whenever a new comment is created
+
     public String getFormattedComment() {
-         return authorName + " (" + authorId + ") : " +  message + "(" + timestamp + ")";
-    }
-
-
+         return  " (" + authorId + ") : " +  message + "(" + timestamp + ")";
+    } // will remove soon when UI, remove nalang when may sa UI sa
 
 }

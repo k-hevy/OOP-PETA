@@ -30,8 +30,4 @@ public class Faculty extends Requestor {
     public void setPosition(String position) {this.position = position;}
     public void setDeskExtension(String deskExtension)  {this.deskExtension = deskExtension;}
 
-    
-
-
-    
 }
