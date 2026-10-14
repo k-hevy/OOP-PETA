@@ -22,8 +22,8 @@ public class Requestor extends User {
         return ticket;  
     }
 
-    public Ticket createTicket(String priority, String category, String description) {
-        return new Ticket(this, null, priority, category, description);
+    public Ticket createTicket(String priority, String category, String subject, String description) {
+        return new Ticket(this, null, priority, category, subject, description);
     } 
 
     public Comment createComment(String message){

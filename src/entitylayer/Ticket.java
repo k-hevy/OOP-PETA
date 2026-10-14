@@ -5,24 +5,26 @@ import java.util.ArrayList;
 
 public class Ticket {
 
-    private String ticketId;
-    private Requestor submittedBy;
+    private final LocalDateTime dateSubmitted;
+    private String state;
+    private final String ticketId;
+    private final Requestor submittedBy;
     private SupportAgent assignedAgent;
     private String priority;
     private String category;
-    private LocalDateTime dateSubmitted;
-    private String state;
+    private String subject;
     private String description;
-    private ArrayList<Comment> comments;
-    private ArrayList<TicketLogEntry> ticketLogEntries;
+    private final ArrayList<Comment> comments;
+    private final ArrayList<TicketLogEntry> ticketLogEntries;
     private static int ticketCounter = 0;
 
-    public Ticket(Requestor submittedBy, SupportAgent assignedTo, String priority, String category, String description) {
+    public Ticket(Requestor submittedBy, SupportAgent assignedTo, String priority, String category, String subject, String description) {
         this.ticketId = generateTicketId();
         this.submittedBy = submittedBy;
         this.assignedAgent = assignedTo;
         this.priority = priority;
         this.category = category;
+        this.subject = subject;
         this.dateSubmitted = LocalDateTime.now();
         this.state = "OPEN";
         this.description = description;
@@ -39,6 +41,7 @@ public class Ticket {
     public String getCategory() {return category;}
     public LocalDateTime getDateSubmitted() {return dateSubmitted;}
     public String getState() {return state;}
+    public String getSubject() { return subject; }
     public String getDescription() {return description;}
     public ArrayList<Comment> getComments() {return new ArrayList<>(comments);}
     public ArrayList<TicketLogEntry> getTicketLogEntries() {return new ArrayList<>(ticketLogEntries);}
@@ -46,6 +49,7 @@ public class Ticket {
     // setters
     public void setAssignedAgent(SupportAgent agent) {this.assignedAgent = agent;}
     public void setCategory(String category) {this.category = category; }
+    public void setSubject(String subject) { this.subject = subject; }
     public void setDescription(String description) {this.description = description;}
 
     public boolean addComment(Comment comment) {

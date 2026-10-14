@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 
 public class Comment {
 
-    private String commentId;
-    private String authorId;
-    private String message;
-    private LocalDateTime timestamp;
+    private final String commentId;
+    private final String authorId;
+    private final String message;
+    private final LocalDateTime timestamp;
     private static int commentCounter = 0;
 
     public Comment(String authorId, String message) {

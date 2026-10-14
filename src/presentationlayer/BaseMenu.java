@@ -23,7 +23,7 @@ public abstract class BaseMenu {
             int choice = readInt("Enter your choice: ", getMinChoice(), getMaxChoice()); // prompts the user
             executeChoice(choice); // executes that choice
         }
-    }
+    } // Contains Main loop of Menus only
 
     public void stop() {
         this.running = false;
@@ -33,11 +33,10 @@ public abstract class BaseMenu {
         while (true) {
             System.out.print(prompt);
             String rawInput = input.nextLine();
-
             if (rawInput == null || rawInput.trim().isEmpty()) {
                 System.out.println("Input cannot be blank. Please try again");
                 continue;
-            }
+            } 
             try {
                 int value = Integer.parseInt(rawInput.trim());
                 if (value >= min && value <= max) { return value; }
@@ -69,6 +68,28 @@ public abstract class BaseMenu {
         if (maxLength <= 3) { return text.substring(0, maxLength); }
         return text.substring(0, maxLength -3) + "...";
     }
+
+    protected boolean confirm(String prompt) {
+        while (true) {
+            System.out.println(prompt + "? [Y/N]: ");
+            String rawChoice = input.nextLine();
+            if (rawChoice == null || rawChoice.trim().isEmpty()) {
+                System.out.println("Input cannot be blank. Please try again.");
+                continue;
+            }
+            String choice = rawChoice.trim().toLowerCase();
+            if (choice.equals("y") || choice.equals("yes")) {
+                return true;
+            } else if (choice.equals("n") || choice.equals("no")) {
+                return false;
+            } 
+            System.out.println("Invalid Input. Please enter Y for Yes, and N for No.");
+        }
+    } // asks a question then returns the choice
+
+    protected void waitForEnter() {
+        System.out.println("\nPress Enter to go back ");
+    } // 
 
     protected abstract void displayMenu();
     protected abstract void executeChoice(int choice);

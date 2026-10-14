@@ -6,13 +6,13 @@ import java.util.ArrayList;
 
 public abstract class User {
 
-    private String userId;
+    private final String userId;
     private String firstName;
     private String lastName;
     private String email;
     private String password;
-    private LocalDateTime dateRegistered;
-    private Repository repository;
+    private final LocalDateTime dateRegistered;
+    private final Repository repository;
 
     public User(String userId, String firstName, String lastName, String email, String password, Repository repository) {
         this.userId = userId;
@@ -39,16 +39,11 @@ public abstract class User {
     public String getPassword() { return password; }
     public LocalDateTime getDateRegistered() { return dateRegistered; }
     protected Repository getRepository() {return repository;}
-    public ArrayList<TicketLogEntry> getTicketHistory(String ticketId) {
-        Ticket ticket = getTicket(ticketId);
-        return (ticket == null) ? new ArrayList<>() : ticket.getTicketLogEntries(); 
-    }
+    public ArrayList<TicketLogEntry> getTicketHistory(String ticketId) { Ticket ticket = getTicket(ticketId); return (ticket == null) ? new ArrayList<>() : ticket.getTicketLogEntries(); }
 
     // Others
     public boolean checkPassword(String password) { return this.password != null && this.password.equals(password); } 
     public abstract String getRole();
     public abstract Ticket getTicket(String ticketId);
-    
 
-    
 }

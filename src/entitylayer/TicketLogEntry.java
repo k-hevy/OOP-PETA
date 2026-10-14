@@ -4,13 +4,13 @@ import java.time.LocalDateTime;
 
 public class TicketLogEntry {
 
-    private String ticketLogEntryId;
-    private String previousState;
-    private String newState;
-    private String changedByUserId;
-    private String changedByUserName;
-    private LocalDateTime timestamp;
-    private String reason;
+    private final String ticketLogEntryId;
+    private final String previousState;
+    private final String newState;
+    private final String changedByUserId;
+    private final String changedByUserName;
+    private final LocalDateTime timestamp;
+    private final String reason;
     private static  int ticketLogEntryCounter = 0;
 
     public TicketLogEntry(String previousState, String newState, String changedByUserId, String changedByUserName, String reason) {

@@ -14,7 +14,14 @@ public class SupportAgentMenu extends BaseMenu {
 
     @Override
     protected void displayMenu() {
-        System.err.println("SUPPORTAGENT MENU");
+        System.out.println("SUPPORTAGENT MENU");
+        System.out.println("[1] View Assigned Tickets");
+        System.out.println("[2] View Ticket Details");
+        System.out.println("[3] Update Ticket Status");
+        System.out.println("[4] Change Priority");
+        System.out.println("[5] Add Comment");
+        System.out.println("[6] View My Resolved Count");
+        System.out.println("[0] Logout");
     }
 
     @Override
@@ -24,12 +31,12 @@ public class SupportAgentMenu extends BaseMenu {
 
     @Override
     protected int getMinChoice() {
-        return -1;
+        return 0;
     }
 
     @Override
     protected int getMaxChoice() {
-        return -1;
+        return 6;
     }
 
 }
