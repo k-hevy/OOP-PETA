@@ -36,16 +36,8 @@ public class TicketLogEntry {
         return String.format("LG-%03d", ticketLogEntryCounter);
     } // called whenever a new log is created
 
-    public String getFormattedLogEntry() {
-        return "TicketLogEntry {" +
-                "ticketLogEntryId='" + ticketLogEntryId + '\'' +
-                ", previousState='" + previousState + '\'' +
-                ", newState='" + newState + '\'' +
-                ", changedByUserId='" + changedByUserId + '\'' +
-                ", changedByUserName='" + changedByUserName + '\'' +
-                ", timestamp=" + timestamp +
-                ", reason='" + reason + '\'' +
-                '}';
-    }// will remove soon when UI, remove nalang when may sa UI sa
+    public String getTime() {
+        return getTimestamp().format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm"));
+    }
 
 }

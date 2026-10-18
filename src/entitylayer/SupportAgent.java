@@ -32,38 +32,38 @@ public class SupportAgent extends User {
     @Override
     public Ticket getTicket(String ticketId) {
         Ticket ticket = getRepository().findTicketById(ticketId);
-        if (ticket == null || ticket.getAssignedAgent() == null) { return null; }
-        if (!ticket.getAssignedAgent().getUserId().equalsIgnoreCase(getUserId())) { return null; }
+        if (ticket == null) {
+            throw new IllegalArgumentException("Ticket " + ticketId + " was not found.");
+        }
+        if (ticket.getAssignedAgent() == null || !ticket.getAssignedAgent().getUserId().equalsIgnoreCase(getUserId()) ) { 
+           throw new SecurityException("You can only view tickets assigned to you.");
+        }
         return ticket;
     } 
 
     public Comment createComment(String message){
-        return new Comment(getUserId(), message);
+        return new Comment(this, message);
     }
 
-    public boolean addComment(String ticketId, String message) {
+    public void addComment(String ticketId, String message) {
         Ticket ticket = getTicket(ticketId);
-        if (ticket == null) { return false; }
-        return ticket.addComment(createComment(message));
+        ticket.addComment(createComment(message));
     }
 
-    public boolean updateTicketState(String ticketId, String newState, String reason) {
-        if (newState == null || reason == null) { return false; }
+    public void updateTicketState(String ticketId, String newState, String reason) {
+        if (newState == null || reason == null) {
+            throw new IllegalArgumentException("New state and reason cannot be empty");
+        }
+        if (newState.equalsIgnoreCase("CLOSED") || newState.equalsIgnoreCase("CANCELLED")) {
+            throw new SecurityException("agent cannot set state to " + newState.toUpperCase());
+        }
         Ticket ticket = getTicket(ticketId);
-        if (ticket == null) { return false; }
-
-        String currentState = ticket.getState();
-        boolean startWork   = currentState.equalsIgnoreCase("OPEN")        && newState.equalsIgnoreCase("IN_PROGRESS");
-        boolean resolve     = currentState.equalsIgnoreCase("IN_PROGRESS") && newState.equalsIgnoreCase("RESOLVED");
-        boolean undoResolve = currentState.equalsIgnoreCase("RESOLVED")    && newState.equalsIgnoreCase("IN_PROGRESS");
-        if (!startWork && !resolve && !undoResolve) { return false; }
-        return ticket.changeState(newState, this, reason);
+        ticket.changeState(newState, this, reason);
     }
 
-    public boolean changePriority(String ticketId, String newPriority) {
+    public void updatePriority(String ticketId, String newPriority, String reason) {
         Ticket ticket = getTicket(ticketId);
-        if (ticket == null) return false;
-        return ticket.changePriority(newPriority, this);
+        ticket.changePriority(newPriority, ticket.getPriority(), reason, this);
     }
 
     public ArrayList<Ticket> getAssignedTickets() {
@@ -77,17 +77,6 @@ public class SupportAgent extends User {
             }
         }
         return assignedTickets;
-    }
-
-    public int getTicketsResolvedCount() {
-        int count = 0;
-        for (Ticket ticket : getAssignedTickets()) {
-            String state = ticket.getState();
-            if (state.equalsIgnoreCase("RESOLVED") || state.equalsIgnoreCase("CLOSED")) {
-                count++;
-            }
-        }
-        return count;
     }
 
     public ArrayList<Ticket> getActiveTickets() {

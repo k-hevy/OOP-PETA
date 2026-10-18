@@ -24,7 +24,11 @@ public class Admin extends User {
 
     @Override
     public Ticket getTicket(String ticketId) {
-        return getRepository() == null ? null : getRepository().findTicketById(ticketId);
+        Ticket ticket =getRepository().findTicketById(ticketId);
+        if (ticket == null) {
+            throw new IllegalArgumentException("Ticket " + ticketId + " was not found.");
+        }
+        return ticket;
     }
 
     // Getters
@@ -37,24 +41,22 @@ public class Admin extends User {
     public void setManagedDepartment(String managedDepartment) { this.managedDepartment = managedDepartment; }
     public void setDeskExtension(String deskExtension) { this.deskExtension = deskExtension; }
 
-    public boolean reassignTicket(String ticketId, String agentId, String reason) {
-        if (agentId == null || reason == null) { return false; }
+    public void reassignTicket(String ticketId, String agentId, String reason) {
+        if (agentId == null || reason == null) {
+            throw new IllegalArgumentException("AgentId and reason are required");
+        }
         Ticket ticket = getTicket(ticketId);
         User user = getRepository().findUserById(agentId);
 
-        if (ticket == null ) { return false; }
-        if (!(user instanceof SupportAgent agent)) { return false; }
-        if (agent.getSpecialization() == null) { return false; }
-        if (!agent.getSpecialization().equalsIgnoreCase(ticket.getCategory())) { return false; }
-
-        return ticket.reassignTicket(agent, this, reason);
+        if (!(user instanceof SupportAgent agent)) { 
+            throw new IllegalArgumentException("User with " + agentId + " is not an agent.");
+        }
+        ticket.reassignTicket(agent, this, reason);
     } 
 
-    public boolean rejectTicket(String ticketId, String reason) {
+    public void rejectTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId);
-        if (ticket == null) { return false; }
-        if (!((ticket.getState().equalsIgnoreCase("OPEN") || ticket.getState().equalsIgnoreCase("IN_PROGRESS")))) { return false; }
-        return ticket.changeState("CANCELLED", this, reason);
+        ticket.changeState("CANCELLED", this, reason);
     }
 
     public ArrayList<Ticket> getAllTickets() {

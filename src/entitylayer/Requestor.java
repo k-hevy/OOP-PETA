@@ -17,47 +17,51 @@ public class Requestor extends User {
     @Override
     public Ticket getTicket(String ticketId) {
         Ticket ticket = getRepository().findTicketById(ticketId);
-        if (ticket == null || ticket.getSubmittedBy() == null) { return null; }
-        if (!ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId())) { return null; }
+        if (ticket == null) { 
+            throw new IllegalArgumentException("Ticket " + ticketId +" was not found."); 
+        }
+        if (ticket.getSubmittedBy() == null || !ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId())) { 
+            throw new SecurityException("You can only view your own tickets."); 
+        }
         return ticket;  
-    }
+    } // throws an exception if invalid Ticket ID / if you do not own ticket
 
     public Ticket createTicket(String priority, String category, String subject, String description) {
         return new Ticket(this, null, priority, category, subject, description);
     } 
 
     public Comment createComment(String message){
-        return new Comment(getUserId(), message);
+        return new Comment(this, message);
     }
     
-    public boolean submitTicket(Ticket ticket) {
-        if (ticket == null) {return false; }
-        assignTicket(ticket);
+    public void submitTicket(Ticket ticket) {
+        if (ticket == null) { 
+            throw new IllegalArgumentException("Cannot submit an empty Ticket"); 
+        }
+        assignTicket(ticket); // tickets stays unassigned if no agent matches
         getRepository().addTicket(ticket);
-        return true;
      }
      
-    public boolean cancelTicket(String ticketId, String reason) {
-        Ticket ticket = getTicket(ticketId);
-        if (ticket == null) { return false;}
-        if (!(ticket.getState().equalsIgnoreCase("OPEN") || ticket.getState().equalsIgnoreCase("IN_PROGRESS"))) { return false; }
-           
-        return ticket.changeState("CANCELLED", this, reason);
+    public void cancelTicket(String ticketId, String reason) {
+        Ticket ticket = getTicket(ticketId); // throws an error if not found
+        ticket.changeState("CANCELLED", this, reason);
      }
      
-    public boolean reopenTicket(String ticketId, String reason) {
-        Ticket ticket = getTicket(ticketId);
-        if (ticket == null) { return false; }
-        if (!ticket.getState().equalsIgnoreCase("RESOLVED")) {return false; }
-        return ticket.changeState("IN_PROGRESS", this, reason);
+    public void reopenTicket(String ticketId, String reason) {
+        Ticket ticket = getTicket(ticketId); // throws an error if not found
+        ticket.changeState("IN_PROGRESS", this, reason);
      }
      
-    public boolean addComment(String ticketId, String message) {
+    public void addComment(String ticketId, String message) {
         Ticket ticket = getTicket(ticketId);
-        if (ticket == null) { return false; }
-        return ticket.addComment(createComment(message));
+        ticket.addComment(createComment(message));
     }
-          
+
+    public void closeTicket(String ticketId, String reason) {
+        Ticket ticket = getTicket(ticketId); // throws an error if not found
+        ticket.changeState("CLOSED", this, reason);
+    }
+
     public ArrayList<Ticket> getMyTickets() {
         ArrayList<Ticket> myTickets = new ArrayList<>();
         ArrayList<Ticket> allTickets = getRepository().getAllTickets();
@@ -69,18 +73,7 @@ public class Requestor extends User {
             }
         return myTickets;
     }
-     
-    public int getSubmittedTicketCount() {
-          return getMyTickets().size();
-    }
-
-    public boolean closeTicket(String ticketId, String reason) {
-        Ticket ticket = getTicket(ticketId);
-        if (ticket == null ) { return false; }
-        if (!ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId())) { return false; }
-        return ticket.changeState("CLOSED", this, reason);
-    }
-
+    
     public ArrayList<Ticket> getActiveTickets() {
         ArrayList<Ticket> myTickets = new ArrayList<>();
         for (Ticket ticket : getMyTickets()) {

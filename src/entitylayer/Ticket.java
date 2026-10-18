@@ -39,7 +39,7 @@ public class Ticket {
     public SupportAgent getAssignedAgent() {return assignedAgent;}
     public String getPriority() {return priority;}
     public String getCategory() {return category;}
-    public LocalDateTime getDateSubmitted() {return dateSubmitted;}
+    public String getDateSubmitted() {return dateSubmitted.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));}
     public String getState() {return state;}
     public String getSubject() { return subject; }
     public String getDescription() {return description;}
@@ -52,28 +52,46 @@ public class Ticket {
     public void setSubject(String subject) { this.subject = subject; }
     public void setDescription(String description) {this.description = description;}
 
-    public boolean addComment(Comment comment) {
-        if (comment == null) { return false; }
-        if (state.equalsIgnoreCase("CLOSED") || state.equalsIgnoreCase("CANCELLED")) { return false; }
+    public void addComment(Comment comment) {
+        if (comment == null) { 
+            throw new IllegalArgumentException("Comment cannot be empty"); 
+        }
+        if (state.equalsIgnoreCase("CLOSED") || state.equalsIgnoreCase("CANCELLED")) { 
+            throw new IllegalStateException("Ticket " + ticketId + " is " + getState() + ". Comments are not allowed on Closed or Cancelled tickets."); 
+        }
         comments.add(comment);
-        return true;
     }
 
-    public boolean changeState(String newState, User changedBy, String reason) {
-        if (newState == null  || changedBy == null || reason == null) { return false; } 
-        if (!isValidTransition(state, newState)) { return false; }
+    public void changeState(String newState, User changedBy, String reason) {
+        if (newState == null  || changedBy == null || reason == null) { 
+            throw new IllegalArgumentException("State, user, and reason are required."); 
+        } 
+        if (getState().equalsIgnoreCase("CANCELLED")) { 
+            throw new IllegalStateException("Ticket " + ticketId + " is Cancelled and cannot be changed."); 
+        }
+        if (!isValidTransition(state, newState)) {
+            throw new IllegalStateException("Cannot move ticket " + ticketId + " from " + getState() + " to " + newState.toUpperCase() + ".");
+        }
         String oldState = this.state;
         this.state = newState.toUpperCase();
         ticketLogEntries.add(new TicketLogEntry(oldState, this.state, changedBy.getUserId(), changedBy.getFirstName(), reason.trim()));
-        return true;
     }
     
     public boolean reassignTicket(SupportAgent newAgent, User changedBy, String reason) {
-        if (newAgent == null || changedBy == null || reason == null) { return false; }
-        if (!(state.equalsIgnoreCase("OPEN") || state.equalsIgnoreCase("IN_PROGRESS"))) { return false; } 
-        if (newAgent == this.assignedAgent) return false;
+        if (newAgent == null || changedBy == null || reason == null) { 
+            throw new IllegalStateException("Agent, user, and reason cannot be empty"); 
+        }
+        if (!(state.equalsIgnoreCase("OPEN") || state.equalsIgnoreCase("IN_PROGRESS"))) { 
+            throw new IllegalStateException("Ticket " + ticketId + " only OPEN or IN-PROGRESS tickets can be reassigned.");
+        }
+        if (newAgent == this.assignedAgent) { 
+            throw new IllegalArgumentException("Ticket " + ticketId + " is already assigned to " + newAgent.getFirstName() + "."); 
+        }
+
+        String oldAgentName = getAssignedAgent().getFullName();
+        String newAgentName = newAgent.getFullName();
         setAssignedAgent(newAgent);
-        ticketLogEntries.add(new TicketLogEntry(state, state, changedBy.getUserId(), changedBy.getFirstName(), "Reassigend to " + newAgent.getFirstName() + ": " + reason));
+        ticketLogEntries.add(new TicketLogEntry(oldAgentName, newAgentName, changedBy.getUserId(), changedBy.getFirstName(), reason));
         return true;
     }
 
@@ -86,18 +104,22 @@ public class Ticket {
                (oldState.equalsIgnoreCase("RESOLVED") && newState.equalsIgnoreCase("IN_PROGRESS"));
     }    
     
-    public boolean changePriority(String newPriority, User changedBy) {
-        if (newPriority == null || changedBy == null) { return false; }
-        if (newPriority.equalsIgnoreCase(getPriority())) { return false; } 
-        if (!newPriority.equalsIgnoreCase("URGENT") && 
-            !newPriority.equalsIgnoreCase("HIGH") && 
-            !newPriority.equalsIgnoreCase("MEDIUM") && 
-            !newPriority.equalsIgnoreCase("LOW")) {
-            return false;
+    public void changePriority(String newPriority, String oldPrority,  String reason, User changedBy) {
+        if (newPriority == null || changedBy == null) { 
+            throw new IllegalArgumentException("Priority and User are required"); 
+        }
+        if (state.equalsIgnoreCase("CLOSED") || state.equalsIgnoreCase("CANCELLED")) { 
+            throw new IllegalArgumentException("Cannot changed the priority on a ticket that is " + getState()); 
+        }
+        newPriority = newPriority.toUpperCase();
+        if (!(newPriority.equals("LOW") || newPriority.equals("MEDIUM") || newPriority.equals("HIGH") || newPriority.equals("URGENT"))) { 
+            throw new IllegalArgumentException("Invalid priority: " + newPriority + ". Choose URGENT, HIGH, MEDIUM, or LOW.");
+        }
+        if (newPriority.equalsIgnoreCase(getPriority())) { 
+            throw new IllegalArgumentException("Ticket " + ticketId + " is already " + priority + " priority"); 
         } 
-        ticketLogEntries.add(new TicketLogEntry(getState(), getState(), changedBy.getUserId(), changedBy.getFirstName(), "Changed Priority From: " + getPriority() + " -> " + newPriority));
+        ticketLogEntries.add(new TicketLogEntry(oldPrority, newPriority, changedBy.getUserId(), changedBy.getFirstName(), reason));
         this.priority = newPriority;
-        return true;
     } 
 
     private String generateTicketId() {
