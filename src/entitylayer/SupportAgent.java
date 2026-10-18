@@ -63,7 +63,7 @@ public class SupportAgent extends User {
 
     public void updatePriority(String ticketId, String newPriority, String reason) {
         Ticket ticket = getTicket(ticketId);
-        ticket.changePriority(newPriority, ticket.getPriority(), reason, this);
+        ticket.changePriority(newPriority, reason, this);
     }
 
     public ArrayList<Ticket> getAssignedTickets() {

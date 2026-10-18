@@ -21,7 +21,9 @@ public abstract class BaseMenu {
 
     public void run() {
         while (running) {
+            System.out.println("");
             displayMenu(); // display your menu
+            System.out.println("");
             int choice = readInt("Enter your choice: ", getMinChoice(), getMaxChoice()); // prompts the user
             executeChoice(choice); // executes that choice
         }
@@ -90,17 +92,19 @@ public abstract class BaseMenu {
     } // asks a question then returns the choice
 
     protected void waitForEnter() {
-        System.out.print("\nPress Enter to go back ");
+        System.out.print("\nPress Enter to proceed: ");
         input.nextLine();
     } 
 
     protected String readPriority() {
         while(true) {
+            System.out.println("");
             System.out.println("[1] LOW");
             System.out.println("[2] MEDIUM");
             System.out.println("[3] HIGH");
             System.out.println("[4] URGENT");
-            int choice = readInt("choice", 1, 4);
+            System.out.println("");
+            int choice = readInt("choice: ", 1, 4);
             switch (choice) {
                 case 1 -> { return "LOW"; }
                 case 2 -> { return "MEDIUM"; }
@@ -112,13 +116,14 @@ public abstract class BaseMenu {
 
     protected String readCategory() {
         while(true) {
+            System.out.println("");
             System.out.println("[1] FACILITIES MAINTENANCE");
             System.out.println("[2] SOFTWARE SYSTEMS");
             System.out.println("[3] NETWORK");
             System.out.println("[4] HARDWARE");
             System.out.println("[5] ACCOUNT SECURITY"); 
             System.out.println();
-            int choice = readInt("choice", 1, 5);
+            int choice = readInt("choice: ", 1, 5);
             switch (choice) {
                 case 1 -> { return "FACILITIES_MAINTENANCE"; }
                 case 2 -> { return "SOFTWARE_SYSTEMS"; }
@@ -132,12 +137,14 @@ public abstract class BaseMenu {
     protected String readSubject(String category) {
         switch (category) {
             case "FACILITIES_MAINTENANCE" -> {
+                System.out.println();
                 System.out.println("[1] Plumbing & Leaks");
                 System.out.println("[2] HVAC & Temperature");
                 System.out.println("[3] Lighting & Electrical");
                 System.out.println("[4] Carpentry & Keys");
                 System.out.println("[5] Others (specify)");
-                int choice = readInt("choice", 1, 5);
+                System.out.println();
+                int choice = readInt("choice: ", 1, 5);
                 switch (choice) {
                     case 1 -> { return "Plumbing & Leaks"; }
                     case 2 -> { return "HVAC & Temperature"; }
@@ -147,12 +154,14 @@ public abstract class BaseMenu {
                 }
             }
             case "SOFTWARE_SYSTEMS" -> {
+                System.out.println();
                 System.out.println("[1] LMS / Portal Issue");
                 System.out.println("[2] Software Installation");
                 System.out.println("[3] Email / Collaboration");
                 System.out.println("[4] Grading & Enrollment Tools ");
                 System.out.println("[5] Others (specify)");
-                int choice = readInt("choice", 1, 5);
+                System.out.println();
+                int choice = readInt("choice: ", 1, 5);
                 switch (choice) {
                     case 1 -> { return "LMS / Portal Issue"; }
                     case 2 -> { return "Software Installation"; }
@@ -162,12 +171,14 @@ public abstract class BaseMenu {
                 }
             }
             case "NETWORK" -> {
+                System.out.println();
                 System.out.println("[1] Campus Wi-Fi Disconnect");
                 System.out.println("[2] Ethernet / Wired Port ");
                 System.out.println("[3] VPN Connection");
                 System.out.println("[4] Slow Internet Speed");
                 System.out.println("[5] Others (specify)");
-                int choice = readInt("choice", 1, 5);
+                System.out.println();
+                int choice = readInt("choice: ", 1, 5);
                 switch (choice) {
                     case 1 -> { return "Campus Wi-Fi Disconnect"; }
                     case 2 -> { return "Ethernet / Wired Port "; }
@@ -177,12 +188,14 @@ public abstract class BaseMenu {
                 }
             }
             case "HARDWARE" -> {
+                System.out.println();
                 System.out.println("[1] Computer / Lab PC Failure");
                 System.out.println("[2] Printer & Copier Jam");
                 System.out.println("[3] Classroom AV & Projector");
                 System.out.println("[4] Peripherals & Cables");
                 System.out.println("[5] Others (specify)");
-                int choice = readInt("choice", 1, 5);
+                System.out.println();
+                int choice = readInt("choice: ", 1, 5);
                 switch (choice) {
                     case 1 -> { return "Computer / Lab PC Failure"; }
                     case 2 -> { return "Printer & Copier Jam"; }
@@ -192,12 +205,14 @@ public abstract class BaseMenu {
                 }
             }
             case "ACCOUNT_SECURITY" -> {
+                System.out.println();
                 System.out.println("[1] Password Reset");
                 System.out.println("[2] Multi-Factor Auth (MFA)");
                 System.out.println("[3] Phishing & Scams");
                 System.out.println("[4] Access Permissions");
                 System.out.println("[5] Others (specify)");
-                int choice = readInt("choice", 1, 5);
+                System.out.println();
+                int choice = readInt("choice: ", 1, 5);
                 switch (choice) {
                     case 1 -> { return "Password Reset"; }
                     case 2 -> { return "Multi-Factor Auth (MFA)"; }
@@ -208,6 +223,42 @@ public abstract class BaseMenu {
             }
         }
         return readLine("Enter Subject: ", false);
+    }
+
+    protected String readState() { 
+        while(true) {
+            System.out.println("");
+            System.out.println("[1] OPEN");
+            System.out.println("[2] IN-PROGRESS");
+            System.out.println("[3] RESOLVED");
+            System.out.println("[4] CLOSED");
+            System.out.println("[5] CANCELLED");
+            System.out.println("");
+            int choice = readInt("choice: ", 1, 5);
+            switch (choice) {
+                case 1 -> { return "OPEN"; }
+                case 2 -> { return "IN_PROGRESS"; }
+                case 3 -> { return "RESOLVED"; }
+                case 4 -> { return "RESOLVED"; }
+                case 5 -> { return "CANCELLED"; }
+            }
+        }
+    }
+
+    protected String readRole() {
+        while(true) {
+            System.out.println("");
+            System.out.println("[1] REQUESTOR");
+            System.out.println("[2] SUPPORTAGENT");
+            System.out.println("[3] ADMIN");
+            System.out.println("");
+            int choice = readInt("choice: ", 1, 3);
+            switch (choice) {
+                case 1 -> { return "REQUESTOR"; }
+                case 2 -> { return "SUPPORTAGENT"; }
+                case 3 -> { return "ADMIN"; }
+            }
+        }
     }
 
     protected abstract void displayMenu();

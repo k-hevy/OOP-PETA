@@ -23,7 +23,7 @@ public class AdminMenu extends BaseMenu {
 
     @Override
     protected void displayMenu() {
-        System.out.println("ADMIN MENU");
+        System.out.println("---- ADMIN MENU ----");
         System.out.println("[1] View All Users");
         System.out.println("[2] View All Tickets");
         System.out.println("[3] View Ticket Details");
@@ -42,7 +42,7 @@ public class AdminMenu extends BaseMenu {
             case 4 -> { reassignTicket(); }
             case 5 -> { rejectTicket();}
             case 6 -> { generateSummaryReport(); }
-            case 7 -> { System.out.println("Logging out. Goodbye!"); stop(); }
+            case 0 -> { System.out.println("Logging out. Goodbye!"); stop(); }
         }
     }
 
@@ -53,7 +53,7 @@ public class AdminMenu extends BaseMenu {
 
     @Override
     protected int getMaxChoice() {
-        return 7;
+        return 6;
     }
 
     public void viewAllUsers() {
@@ -72,15 +72,20 @@ public class AdminMenu extends BaseMenu {
             ArrayList<User> users;
             if (choice == 1) { users = admin.getAllUsers(); } else {
                 String field = switch(choice) {
-                    case 2  -> "ID";
+                    case 2  ->  "ID";
                     case 3  ->  "ROLE"; 
                     case 4  ->  "NAME";
                     default -> "SPECIALIZATION"; 
                 };
-                String value = readLine("Enter " + field.toLowerCase() + " to match: ", false);
-                users = admin.filterUsers(field, value);
+                String value = switch (field) {
+                    case "ROLE" -> readRole();
+                    case "SPECIALIZATION" -> readCategory();
+                    case "ID", "NAME" -> readLine("Enter " + field.toLowerCase() + " to match: ", false);
+                    default -> throw new IllegalArgumentException("Unsupported filter field: " + field);
+                };
+                 users = admin.filterUsers(field, value);
             }
-            displaySumamrizeUser(users);
+            displaySummarizedUser(users);
             waitForEnter();
         }
     }
@@ -93,10 +98,10 @@ public class AdminMenu extends BaseMenu {
             System.out.println("[3] Filter by Category");
             System.out.println("[4] Filter by Priority (URGENT, HIGH, MEDIUM, LOW)");
             System.out.println("[5] Filter by Requestor ID");
-            System.out.println("[6] Filter by Agent ID (or UNASSIGNED)");
+            System.out.println("[6] Filter by Agent ID");
             System.out.println("[0] Back");
             System.out.println();
-            int choice = readInt("Choice", 0, 6);
+            int choice = readInt("Choice: ", 0, 6);
 
             if (choice == 0) { System.out.println("Returning to previous menu..."); return;}
             ArrayList<Ticket> tickets;
@@ -108,7 +113,13 @@ public class AdminMenu extends BaseMenu {
                     case 5  -> "USER";
                     default -> "AGENT";
                 };
-                String value = readLine("Enter " + field.toLowerCase() + " to match: ", false);
+                String value = switch(field) {
+                    case "STATE" -> readState();
+                    case "CATEGORY" -> readCategory();
+                    case "PRIORITY" -> readPriority();
+                    case "USER", "AGENT" -> readLine("Enter " + field.toLowerCase() + " to match: ", false);
+                    default -> throw new IllegalArgumentException("Unsupported filter field: " + field);
+                };
                 tickets = admin.filterTickets(field, value);
             }
             displaySummarizedTickets(tickets);
@@ -208,7 +219,7 @@ public class AdminMenu extends BaseMenu {
 
         System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
         for (TicketLogEntry log : t.getTicketLogEntries()) {
-            System.out.printf("[%s] %-19s by %-12s | %s%n",
+            System.out.printf("[%s] %-30s by %-12s | %s%n",
                 log.getTime(),
                 log.getPreviousState() + " -> " + log.getNewState(),
                 log.getChangedByUserName(),
@@ -244,7 +255,7 @@ public class AdminMenu extends BaseMenu {
         System.out.println();
     }
 
-    private void displaySumamrizeUser(ArrayList<User> users) {
+    private void displaySummarizedUser(ArrayList<User> users) {
          if (users.isEmpty()) {
             System.out.println("No users found.");
             return;

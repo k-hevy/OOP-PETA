@@ -21,7 +21,7 @@ public class SupportAgentMenu extends BaseMenu {
 
     @Override
     protected void displayMenu() {
-        System.out.println("SUPPORT AGENT MENU");
+        System.out.println("---- SUPPORTAGENT MENU ----");
         System.out.println("[1] View Assigned Tickets");
         System.out.println("[2] View Ticket Details");
         System.out.println("[3] Update Ticket Status");
@@ -37,7 +37,7 @@ public class SupportAgentMenu extends BaseMenu {
 
     @Override
     protected int getMaxChoice() {
-        return 6;
+        return 5;
     }
 
     @Override
@@ -53,7 +53,6 @@ public class SupportAgentMenu extends BaseMenu {
     }
 
     public void viewAssignedTickets() {
-         System.out.println("\n====== View Assigned Tickets ======");
         while (true) {
             ArrayList<Ticket> tickets = supportAgent.getAssignedTickets();
             if (tickets.isEmpty()) {
@@ -96,11 +95,11 @@ public class SupportAgentMenu extends BaseMenu {
         try {
             Ticket ticket = supportAgent.getTicket(ticketId);
             String oldState = ticket.getState();
-            String newState = readState();
+            String newState = readAgentState();
             if (confirm("Change ticket state from " + oldState + " to " + newState + "?")) {
-                String reason = readLine("Enter a reason:", false);
+                String reason = readLine("Enter a reason: ", false);
                 supportAgent.updateTicketState(ticketId, newState, reason);
-                System.out.println("Ticket state changed succesful.");
+                System.out.println("Ticket state changed successful.");
             } else {
                 System.out.println("Ticket state change Cancelled.");
             }
@@ -118,9 +117,9 @@ public class SupportAgentMenu extends BaseMenu {
             String oldPriority = ticket.getPriority();
             String newPriority = readPriority();
             if (confirm("Change ticket priority from " + oldPriority + " to " + newPriority + "?")) {
-                String reason = readLine("Enter a reason:", false);
+                String reason = readLine("Enter a reason: ", false);
                 supportAgent.updatePriority(ticketId, newPriority, reason);
-                System.out.println("Ticket priority changed succesful.");
+                System.out.println("Ticket priority changed successful.");
             } else {
                 System.out.println("Ticket priority change Cancelled.");
             }
@@ -131,7 +130,7 @@ public class SupportAgentMenu extends BaseMenu {
     }
 
     public void addComment() {
-        System.out.println("\n====== Update Ticket Priority ======");
+        System.out.println("\n====== Add Comment ======");
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = supportAgent.getTicket(ticketId);
@@ -190,20 +189,22 @@ public class SupportAgentMenu extends BaseMenu {
         System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
         for (TicketLogEntry log : t.getTicketLogEntries()) {
             String modifierName = log.getChangedByUserId().equals(supportAgent.getUserId()) ? "You" : log.getChangedByUserName();
-            System.out.printf("[%s] %-19s by %-12s | %s%n", log.getTime(), (log.getPreviousState() + " -> " + log.getNewState()), modifierName, log.getReason());
+            System.out.printf("[%s] %-30s by %-12s | %s%n", log.getTime(), (log.getPreviousState() + " -> " + log.getNewState()), modifierName, log.getReason());
         }
         System.out.println(LINE);
     }
 
-    private String readState() { 
+    private String readAgentState() { 
         while(true) {
+            System.out.println("");
             System.out.println("[1] OPEN");
             System.out.println("[2] IN-PROGRESS");
             System.out.println("[3] RESOLVED");
-            int choice = readInt("choice", 1, 3);
+            System.out.println("");
+            int choice = readInt("choice: ", 1, 3);
             switch (choice) {
                 case 1 -> { return "OPEN"; }
-                case 2 -> { return "IN-PROGRESS"; }
+                case 2 -> { return "IN_PROGRESS"; }
                 case 3 -> { return "RESOLVED"; }
             }
         }

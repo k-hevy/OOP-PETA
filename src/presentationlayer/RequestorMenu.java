@@ -18,7 +18,7 @@ public class RequestorMenu extends BaseMenu {
 
     @Override
     protected void displayMenu() {
-        System.out.println("REQUESTOR MENU");
+        System.out.println("---- REQUESTOR MENU ----");
         System.out.println("[1] Create Ticket");
         System.out.println("[2] View My Tickets");
         System.out.println("[3] View Detailed Ticket");
@@ -78,8 +78,6 @@ public class RequestorMenu extends BaseMenu {
     } 
 
     public void viewMyTickets() {
-        System.out.println("\n====== View Submitted Tickets ======");
-
         while (true) {
             ArrayList<Ticket> tickets = requestor.getMyTickets();
             if (tickets.isEmpty()) {
@@ -88,12 +86,12 @@ public class RequestorMenu extends BaseMenu {
                 return;
             }
 
-            System.out.println("\n===== View Tickets =====");
+            System.out.println("\n===== View Submitted Tickety =====");
             System.out.println("[1] View all Tickets");
             System.out.println("[2] View all Active Tickets");
             System.out.println("[0] Back");
             System.out.println();
-            int subChoice = readInt("Enter chocie: ", 0, 2);
+            int subChoice = readInt("Enter Choice: ", 0, 2);
 
             switch (subChoice) { 
                 case 1 ->  { displaySummarizedTickets(tickets); }
@@ -125,7 +123,7 @@ public class RequestorMenu extends BaseMenu {
         try {
             requestor.getTicket(ticketId);
             String text = readLine("Enter comment: ", false);
-            if (confirm("Are you sure you top submit this comment?")) {
+            if (confirm("Are you sure you to submit this comment?")) {
                 requestor.addComment(ticketId, text);
                 System.out.println("Success! Comment added to " + ticketId.toUpperCase());
             } else {
@@ -215,8 +213,7 @@ public class RequestorMenu extends BaseMenu {
 
         System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
         for (TicketLogEntry log : t.getTicketLogEntries()) {
-        System.out.printf("[%s] %-19s | %s%n", log.getTime(), (log.getPreviousState() + " -> " + log.getNewState()),  log.getReason() );
-
+            System.out.printf("[%s] %-30s | %s%n", log.getTime(), (log.getPreviousState() + " -> " + log.getNewState()),  log.getReason() );
         }
         System.out.println(LINE);
     }

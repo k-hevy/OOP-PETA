@@ -44,13 +44,19 @@ public class Requestor extends User {
      
     public void cancelTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
+        if (!(ticket.getState().equalsIgnoreCase("OPEN") || ticket.getState().equalsIgnoreCase("IN_PROGRESS"))) {
+            throw new IllegalStateException("Ticket " + ticket.getTicketId() + " is " + ticket.getState() + ". Only OPEN or IN_PROGRESS tickets can be cancelled.");
+        }
         ticket.changeState("CANCELLED", this, reason);
      }
      
     public void reopenTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
+        if (!ticket.getState().equalsIgnoreCase("RESOLVED")) { 
+            throw new IllegalStateException("Ticket " + ticket.getTicketId() + " is " + ticket.getState() + ". Only RESOLVED tickets can be reopened.");
+        }
         ticket.changeState("IN_PROGRESS", this, reason);
-     }
+    }
      
     public void addComment(String ticketId, String message) {
         Ticket ticket = getTicket(ticketId);
@@ -59,6 +65,9 @@ public class Requestor extends User {
 
     public void closeTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
+        if (!ticket.getState().equalsIgnoreCase("RESOLVED")) { 
+            throw new IllegalStateException("Ticket " + ticket.getTicketId() + " is " + ticket.getState() + ". Only RESOLVED tickets can be closed.");
+        }
         ticket.changeState("CLOSED", this, reason);
     }
 

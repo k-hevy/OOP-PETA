@@ -88,23 +88,18 @@ public class Ticket {
             throw new IllegalArgumentException("Ticket " + ticketId + " is already assigned to " + newAgent.getFirstName() + "."); 
         }
 
-        String oldAgentName = getAssignedAgent().getFullName();
+        if (!newAgent.getSpecialization().equalsIgnoreCase(category)) {
+            throw new IllegalArgumentException("Ticket " + ticketId + " category ("+ getCategory() +") does not match " + newAgent.getFirstName() +" ("+ newAgent.getSpecialization() + ") specialization."); 
+        }
+
+        String oldAgentName = (assignedAgent != null) ? getAssignedAgent().getFullName() : "Unassigned";
         String newAgentName = newAgent.getFullName();
         setAssignedAgent(newAgent);
         ticketLogEntries.add(new TicketLogEntry(oldAgentName, newAgentName, changedBy.getUserId(), changedBy.getFirstName(), reason));
         return true;
     }
-
-    private boolean isValidTransition(String oldState, String newState) {
-        return (oldState.equalsIgnoreCase("OPEN") && newState.equalsIgnoreCase("IN_PROGRESS")) ||
-               (oldState.equalsIgnoreCase("IN_PROGRESS") && newState.equalsIgnoreCase("RESOLVED")) ||
-               (oldState.equalsIgnoreCase("RESOLVED") && newState.equalsIgnoreCase("CLOSED")) ||
-               (oldState.equalsIgnoreCase("OPEN") && newState.equalsIgnoreCase("CANCELLED")) ||
-               (oldState.equalsIgnoreCase("IN_PROGRESS") && newState.equalsIgnoreCase("CANCELLED")) ||
-               (oldState.equalsIgnoreCase("RESOLVED") && newState.equalsIgnoreCase("IN_PROGRESS"));
-    }    
     
-    public void changePriority(String newPriority, String oldPrority,  String reason, User changedBy) {
+    public void changePriority(String newPriority,  String reason, User changedBy) {
         if (newPriority == null || changedBy == null) { 
             throw new IllegalArgumentException("Priority and User are required"); 
         }
@@ -118,7 +113,7 @@ public class Ticket {
         if (newPriority.equalsIgnoreCase(getPriority())) { 
             throw new IllegalArgumentException("Ticket " + ticketId + " is already " + priority + " priority"); 
         } 
-        ticketLogEntries.add(new TicketLogEntry(oldPrority, newPriority, changedBy.getUserId(), changedBy.getFirstName(), reason));
+        ticketLogEntries.add(new TicketLogEntry(priority, newPriority, changedBy.getUserId(), changedBy.getFirstName(), reason));
         this.priority = newPriority;
     } 
 
@@ -127,13 +122,14 @@ public class Ticket {
         return String.format("TK-%03d", ticketCounter);
     } // called whenever a new tikcet is created
 
-    public String getFormattedTicket() {
-        String agent = (assignedAgent == null) ? "Unassigned" : assignedAgent.getFullName();
-        return String.format(
-            "Ticket ID      : %s\nState          : %s\nPriority       : %s\nCategory       : %s\nDate Submitted : %s\nSubmitted By   : %s\nAssigned To    : %s\nDescription    : %s\nComments       : %d\nLog Entries    : %d",
-            getTicketId(), getState(), getPriority(), getCategory(), getDateSubmitted(), 
-            getSubmittedBy().getFirstName(), agent, getDescription(), getComments().size(), getTicketLogEntries().size()
-        );
-    } // will remove soon when UI, remove nalang when may sa UI sa
+    private boolean isValidTransition(String oldState, String newState) {
+        return (oldState.equalsIgnoreCase("OPEN") && newState.equalsIgnoreCase("IN_PROGRESS")) ||
+               (oldState.equalsIgnoreCase("IN_PROGRESS") && newState.equalsIgnoreCase("RESOLVED")) ||
+               (oldState.equalsIgnoreCase("RESOLVED") && newState.equalsIgnoreCase("CLOSED")) ||
+               (oldState.equalsIgnoreCase("OPEN") && newState.equalsIgnoreCase("CANCELLED")) ||
+               (oldState.equalsIgnoreCase("IN_PROGRESS") && newState.equalsIgnoreCase("CANCELLED")) ||
+               (oldState.equalsIgnoreCase("IN_PROGRESS") && newState.equalsIgnoreCase("OPEN")) ||
+               (oldState.equalsIgnoreCase("RESOLVED") && newState.equalsIgnoreCase("IN_PROGRESS"));
+    }    
 
 }

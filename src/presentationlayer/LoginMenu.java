@@ -54,6 +54,7 @@ public class LoginMenu extends BaseMenu {
 
         System.out.println("Login Successful! Welcome, " + foundUser.getFullName() + " (" + foundUser.getRole() + ")");
         authenticatedUser = foundUser;
+        waitForEnter();
         stop();
 
     }
