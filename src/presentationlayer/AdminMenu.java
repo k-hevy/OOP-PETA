@@ -23,9 +23,6 @@ public class AdminMenu extends BaseMenu {
 
     @Override
     protected void displayMenu() {
-        System.out.println("\n==============ADMIN MENU===============");
-        System.out.println("[1] View All Users (with filters)");
-        System.out.println("[2] View All Tickets (with filters)");
         System.out.println("---- ADMIN MENU ----");
         System.out.println("[1] View All Users");
         System.out.println("[2] View All Tickets");
