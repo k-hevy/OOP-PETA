@@ -3,6 +3,8 @@ package presentationlayer;
 import datalayer.Repository;
 import entitylayer.Admin;
 import entitylayer.Comment;
+import entitylayer.Faculty;
+import entitylayer.Student;
 import entitylayer.SupportAgent;
 import entitylayer.Ticket;
 import entitylayer.TicketLogEntry;
@@ -25,11 +27,12 @@ public class AdminMenu extends BaseMenu {
     protected void displayMenu() {
         System.out.println("---- ADMIN MENU ----");
         System.out.println("[1] View All Users");
-        System.out.println("[2] View All Tickets");
-        System.out.println("[3] View Ticket Details");
-        System.out.println("[4] Reassign Ticket");
-        System.out.println("[5] Reject Ticket");
-        System.out.println("[6] Generate Summary Report");
+        System.out.println("[2] View User Details");
+        System.out.println("[3] View All Tickets");
+        System.out.println("[4] View Ticket Details");
+        System.out.println("[5] Reassign Ticket");
+        System.out.println("[6] Reject Ticket");
+        System.out.println("[7] Generate Summary Report");
         System.out.println("[0] Logout");
     }
 
@@ -37,11 +40,12 @@ public class AdminMenu extends BaseMenu {
     protected void executeChoice(int choice) {
         switch(choice) {
             case 1 -> { viewAllUsers(); }
-            case 2 -> { viewAllTickets(); }
-            case 3 -> { viewTicketDetails(); }
-            case 4 -> { reassignTicket(); }
-            case 5 -> { rejectTicket();}
-            case 6 -> { generateSummaryReport(); }
+            case 2 -> { viewUserDetails();}
+            case 3 -> { viewAllTickets(); }
+            case 4 -> { viewTicketDetails(); }
+            case 5 -> { reassignTicket(); }
+            case 6 -> { rejectTicket();}
+            case 7 -> { generateSummaryReport(); }
             case 0 -> { System.out.println("Logging out. Goodbye!"); stop(); }
         }
     }
@@ -53,7 +57,7 @@ public class AdminMenu extends BaseMenu {
 
     @Override
     protected int getMaxChoice() {
-        return 6;
+        return 7;
     }
 
     public void viewAllUsers() {
@@ -62,7 +66,7 @@ public class AdminMenu extends BaseMenu {
             System.out.println("[1] All users");
             System.out.println("[2] Filter by ID");
             System.out.println("[3] Filter by Role (REQUESTOR, SUPPORTAGENT, ADMIN)");
-            System.out.println("[4] Filter by Full Name");
+            System.out.println("[4] Filter by Name");
             System.out.println("[5] Filter by Specialization");
             System.out.println("[0] Back");
             System.out.println();
@@ -85,9 +89,22 @@ public class AdminMenu extends BaseMenu {
                 };
                  users = admin.filterUsers(field, value);
             }
+            System.out.println();
             displaySummarizedUser(users);
             waitForEnter();
         }
+    }
+
+    public void viewUserDetails() {
+        System.out.println("\n====== View User Details ======");
+        String userId = readLine("Enter User ID: ", false);
+        try {
+            User foundUser = admin.getUser(userId);
+            viewUserDetails(foundUser);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        waitForEnter();
     }
 
     public void viewAllTickets() {
@@ -122,6 +139,7 @@ public class AdminMenu extends BaseMenu {
                 };
                 tickets = admin.filterTickets(field, value);
             }
+            System.out.println();
             displaySummarizedTickets(tickets);
             waitForEnter();
         }
@@ -132,7 +150,7 @@ public class AdminMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = admin.getTicket(ticketId);
-            displayDetailedTicket(ticket);
+            viewTicketDetails(ticket);
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -144,11 +162,12 @@ public class AdminMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = admin.getTicket(ticketId);
+            ticket.requireActive();
             String agentId = readLine("Enter SupportAgent Id: ", false);
             if (confirm("Reassign Ticket " + ticket.getTicketId() + " to agent " + agentId + "?")) {
                 String reason = readLine("Provide a reason for reassignment: ", false);
                 admin.reassignTicket(ticketId, agentId, reason);
-                System.out.println("Success! Ticket " + ticket.getTicketId() + " has been reassigned.");
+                System.out.println("Success! Ticket " + ticket.getTicketId() + " has been reassigned. to " + agentId);
             } else {
                  System.out.println("Reassignment Aborted");
             }
@@ -163,6 +182,7 @@ public class AdminMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = admin.getTicket(ticketId);
+            ticket.requireTransition("CANCELLED");
             if (confirm("Reject Ticket " + ticket.getTicketId() + "?")) {
                 String reason = readLine("Provide a reason for Rejection: ", false);
                 admin.rejectTicket(ticketId, reason);
@@ -181,7 +201,7 @@ public class AdminMenu extends BaseMenu {
         LinkedHashMap<String, Integer> counts = admin.getSummaryCounts();
         String titles[] = {"Overview", "By State", "By Priority", "By Category"};
         String groups[][] = {
-            {"totalTickets", "totalUsers", "UnassignedTickets"},
+            {"TOTAL_TICKETS", "TOTAL_USERS", "UNASSIGNED"},
             {"OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "CANCELLED"},
             {"URGENT", "HIGH", "MEDIUM", "LOW"},
             {"FACILITIES_MAINTENANCE", "SOFTWARE_SYSTEMS", "NETWORK", "HARDWARE", "ACCOUNT_SECURITY"}
@@ -196,7 +216,9 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
-    private void displayDetailedTicket(Ticket t) {
+    private void viewTicketDetails(Ticket t) {
+
+        System.out.println();
         String requestorName = (t.getSubmittedBy() != null) ? t.getSubmittedBy().getFullName() : "Unknown";
         String agentName = (t.getAssignedAgent() != null) ? t.getAssignedAgent().getFullName() : "Unassigned";
 
@@ -219,7 +241,7 @@ public class AdminMenu extends BaseMenu {
 
         System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
         for (TicketLogEntry log : t.getTicketLogEntries()) {
-            System.out.printf("[%s] %-30s by %-12s | %s%n",
+            System.out.printf("[%s] %-25s by %-12s | %s%n",
                 log.getTime(),
                 log.getPreviousState() + " -> " + log.getNewState(),
                 log.getChangedByUserName(),
@@ -255,25 +277,63 @@ public class AdminMenu extends BaseMenu {
         System.out.println();
     }
 
+    private void viewUserDetails(User user) {
+
+        System.out.println();
+        System.out.println("======== User " + user.getUserId() + " ========");
+        System.out.printf("%-16s : %s%n", "Full Name", user.getFullName());
+        System.out.printf("%-16s : %s%n", "Email", user.getEmail());
+        System.out.printf("%-16s : %s%n", "Date Registered", user.getDateRegisteredFormatted());
+
+        if (user instanceof Student student) {
+            System.out.printf("%-16s : %s%n", "StudentId", student.getStudentId());
+            System.out.printf("%-16s : %s%n", "Program", student.getProgram());
+            System.out.printf("%-16s : %s%n", "Year-Level", student.getYearLevel());
+            System.out.printf("%-16s : %s%n", "Section", student.getSection());
+        }
+
+        if (user instanceof Faculty faculty) {
+            System.out.printf("%-16s : %s%n", "EmployeeId", faculty.getEmployeeId());
+            System.out.printf("%-16s : %s%n", "Departmment", faculty.getDepartment());
+            System.out.printf("%-16s : %s%n", "Position", faculty.getPosition());
+            System.out.printf("%-16s : %s%n", "Desk-Extension", faculty.getDeskExtension());
+        }
+
+
+        if (user instanceof SupportAgent supportAgent) {
+            System.out.printf("%-16s : %s%n", "EmployeeId", supportAgent.getEmployeeId());
+            System.out.printf("%-16s : %s%n", "Specialization", supportAgent.getSpecialization());
+            System.out.printf("%-16s : %s%n", "Desk-Extension", supportAgent.getDeskExtension());
+        }
+
+        if (user instanceof Admin admin) {
+            System.out.printf("%-16s : %s%n", "EmployeeId", admin.getEmployeeId());
+            System.out.printf("%-16s : %s%n", "Specialization", admin.getManagedDepartment());
+            System.out.printf("%-16s : %s%n", "Desk-Extension", admin.getDeskExtension());
+        }
+
+
+    }
+
     private void displaySummarizedUser(ArrayList<User> users) {
          if (users.isEmpty()) {
             System.out.println("No users found.");
             return;
         }
-        System.out.printf("%-10s | %-13s | %-20s | %s%n", "ID", "Role", "Name", "Specialization");
-        System.out.println("-".repeat(72));
+        System.out.printf("%-10s | %-13s | %-20s | %s%n ", "ID", "Role", "Name", "Email");
+        System.out.println("-".repeat(90));
         for (User u : users) {
             if (u == null) {
                 continue;
             }
-            String specialization = (u instanceof SupportAgent agent) ? agent.getSpecialization() : "-";
             System.out.printf("%-10s | %-13s | %-20s | %s%n",
                 truncate(u.getUserId(), 10),
                 truncate(u.getRole(), 13),
                 truncate(u.getFullName(), 20),
-                truncate(specialization, 25)
+                truncate(u.getEmail(), 25)
             );
         }
         System.out.println();
     }
+
 }

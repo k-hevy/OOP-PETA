@@ -21,7 +21,7 @@ public abstract class BaseMenu {
 
     public void run() {
         while (running) {
-            System.out.println("");
+            System.out.println();
             displayMenu(); // display your menu
             System.out.println("");
             int choice = readInt("Enter your choice: ", getMinChoice(), getMaxChoice()); // prompts the user

@@ -38,6 +38,7 @@ public abstract class User {
     public String getEmail() { return email; }
     public String getPassword() { return password; }
     public LocalDateTime getDateRegistered() { return dateRegistered; }
+    public String getDateRegisteredFormatted() {return dateRegistered.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm"));}
     protected Repository getRepository() {return repository;}
     public ArrayList<TicketLogEntry> getTicketHistory(String ticketId) { Ticket ticket = getTicket(ticketId); return (ticket == null) ? new ArrayList<>() : ticket.getTicketLogEntries(); }
 

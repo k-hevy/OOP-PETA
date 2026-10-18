@@ -34,7 +34,7 @@ public class RequestorMenu extends BaseMenu {
         switch (choice) {
             case 1 -> { createTicket(); }
             case 2 -> { viewMyTickets(); } 
-            case 3 -> { displayTicketDetails(); } 
+            case 3 -> { viewTicketDetails(); } 
             case 4 -> { addCommentToTicket(); } 
             case 5 -> { cancelTicket(); } 
             case 6 -> { reopenTicket(); } 
@@ -65,7 +65,9 @@ public class RequestorMenu extends BaseMenu {
             if (confirm("Submit this ticket?")) {
                 Ticket newTicket = requestor.createTicket(priority, category, subject, description);
                 requestor.submitTicket(newTicket);
+                System.out.println("");
                 displayDetailedTicket(newTicket);
+                System.out.println("");
                 System.out.println("Ticket submitted successfully!");
             } else {
                 System.out.println("Cancelled submitting ticket.");
@@ -102,7 +104,7 @@ public class RequestorMenu extends BaseMenu {
         }
     }
 
-    public void displayTicketDetails() {
+    public void viewTicketDetails() {
         System.out.println("\n====== View Ticket details ======");
 
         String ticketId = readLine("Enter Ticket ID to view details: ", false);
@@ -121,7 +123,8 @@ public class RequestorMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket iD: ", false);
 
         try {
-            requestor.getTicket(ticketId);
+            Ticket ticket = requestor.getTicket(ticketId);
+            ticket.requireNotFinished();
             String text = readLine("Enter comment: ", false);
             if (confirm("Are you sure you to submit this comment?")) {
                 requestor.addComment(ticketId, text);
@@ -139,11 +142,12 @@ public class RequestorMenu extends BaseMenu {
         System.out.println("\n====== Cancel a Ticket ======");
         String ticketId = readLine("Enter ticket iD: ", false);
         try {
-            Ticket t = requestor.getTicket(ticketId);
-            if(confirm("Are you sure you want to Cancel ticket " + t.getTicketId() + "?")) {
+            Ticket ticket = requestor.getTicket(ticketId);
+            ticket.requireTransition("CANCELLED");
+            if(confirm("Are you sure you want to Cancel ticket " + ticket.getTicketId() + "?")) {
                 String reason = readLine("Please provide a reason for cancellation: ", false);
                 requestor.cancelTicket(ticketId, reason);
-                System.out.println("Success! Ticket " + t.getTicketId() + " has successfully been cancelled.");
+                System.out.println("Success! Ticket " + ticket.getTicketId() + " has successfully been cancelled.");
             } else {
                 System.out.println("Cancellation aborted");
             }
@@ -158,11 +162,12 @@ public class RequestorMenu extends BaseMenu {
 
         String ticketId = readLine("Enter ticket iD: ", false);
         try {
-            Ticket t = requestor.getTicket(ticketId);
-            if (confirm("Are you sure you want to Re-open ticket " + t.getTicketId() + "?")) {
+            Ticket ticket = requestor.getTicket(ticketId);
+            ticket.requireResolved(); 
+            if (confirm("Are you sure you want to Re-open ticket " + ticket.getTicketId() + "?")) {
                 String reason = readLine("Please provide a reason for reopening: ", false);
                 requestor.reopenTicket(ticketId, reason);
-                System.out.println("Success! Ticket " + t.getTicketId() + " has successfully been re-opened.");
+                System.out.println("Success! Ticket " + ticket.getTicketId() + " has successfully been re-opened.");
             } else {
                 System.out.println("Reopening aborted");
             }
@@ -178,6 +183,7 @@ public class RequestorMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket iD: ", false);
         try {
             Ticket t = requestor.getTicket(ticketId);
+            t.requireTransition("CLOSED");
             if(confirm("Are you sure you want to Close ticket " + t.getTicketId() + "?")) {
                 String reason = readLine("Please provide a reason for Closing: ", false);
                 requestor.closeTicket(ticketId, reason);
@@ -191,11 +197,10 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     }
     
-
     private void displayDetailedTicket(Ticket t) {
         String agentName = (t.getAssignedAgent() != null) ? t.getAssignedAgent().getFullName() : "Unassigned";
 
-        System.out.println("===== TICKET " + t.getTicketId() + " =====");
+        System.out.println(LINE+ " TICKET " + t.getTicketId()  + " " + LINE);
         System.out.printf("%-13s : %s%n", "Category", t.getCategory());
         System.out.printf("%-13s : %s%n", "Subject", t.getSubject());
         System.out.printf("%-13s : %s%n", "Priority", t.getPriority());
@@ -213,9 +218,9 @@ public class RequestorMenu extends BaseMenu {
 
         System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
         for (TicketLogEntry log : t.getTicketLogEntries()) {
-            System.out.printf("[%s] %-30s | %s%n", log.getTime(), (log.getPreviousState() + " -> " + log.getNewState()),  log.getReason() );
+            System.out.printf("[%s] %-25s | %s%n", log.getTime(), (log.getPreviousState() + " -> " + log.getNewState()),  log.getReason() );
         }
-        System.out.println(LINE);
+        System.out.println(LINE+ " TICKET " + t.getTicketId()  + " " + LINE);
     }
 
     private void displaySummarizedTickets(ArrayList<Ticket> tickets) {

@@ -27,7 +27,7 @@ public class SupportAgent extends User {
     public void setDeskExtension(String deskExtension) { this.deskExtension = deskExtension; }
 
     @Override
-    public String getRole() { return "SUPPORTAGENT"; }
+    public String getRole() { return "SUPPORT_AGENT"; }
 
     @Override
     public Ticket getTicket(String ticketId) {
@@ -82,9 +82,7 @@ public class SupportAgent extends User {
     public ArrayList<Ticket> getActiveTickets() {
         ArrayList<Ticket> myTickets = new ArrayList<>();
           for (Ticket ticket : getAssignedTickets()) {
-            String state = ticket.getState();
-            if (ticket.getAssignedAgent().getUserId().equalsIgnoreCase(getUserId()) &&
-                  (state.equalsIgnoreCase("OPEN") || state.equalsIgnoreCase("IN_PROGRESS"))) {
+            if (ticket.isActive()) {
                     myTickets.add(ticket);
             }
           }

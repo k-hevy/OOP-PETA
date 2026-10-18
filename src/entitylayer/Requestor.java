@@ -38,7 +38,7 @@ public class Requestor extends User {
         if (ticket == null) { 
             throw new IllegalArgumentException("Cannot submit an empty Ticket"); 
         }
-        assignTicket(ticket); // tickets stays unassigned if no agent matches
+        autoAssignAgent(ticket); // tickets stays unassigned if no agent matches
         getRepository().addTicket(ticket);
      }
      
@@ -94,7 +94,7 @@ public class Requestor extends User {
         return myTickets;
      } 
 
-    private boolean assignTicket(Ticket ticket) {
+    private boolean autoAssignAgent(Ticket ticket) {
         ArrayList<User> users = getRepository().getAllUsers();
         if (users == null) { return false; }
 

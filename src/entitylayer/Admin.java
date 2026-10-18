@@ -31,6 +31,14 @@ public class Admin extends User {
         return ticket;
     }
 
+    public User getUser(String userId) {
+        User user = getRepository().findUserById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("User " + userId + " was not found.");
+        }
+        return user;
+    }
+
     // Getters
     public String getEmployeeId() { return employeeId; }
     public String getManagedDepartment() { return managedDepartment; }
@@ -97,6 +105,7 @@ public class Admin extends User {
         ArrayList<User> result = new ArrayList<>();
         if (field == null || value == null) { return result; }
 
+        String searchItem = value.toUpperCase();
         ArrayList<User> allUsers = getAllUsers();
         for (User user : allUsers ) {
             if (user == null) { continue; }
@@ -107,7 +116,7 @@ public class Admin extends User {
                 case "SPECIALIZATION" -> user instanceof SupportAgent supportAgent ? supportAgent.getSpecialization() : null;
                 default               -> null;
             };
-            if (actual  != null && actual.equalsIgnoreCase(value.trim())) {
+            if (actual  != null && actual.toUpperCase().contains(searchItem)) {
                 result.add(user);
             }
         }
@@ -116,8 +125,8 @@ public class Admin extends User {
 
     public LinkedHashMap<String, Integer> getSummaryCounts() {
         LinkedHashMap<String, Integer> counts = new LinkedHashMap<>();
-        counts.put("totalTickets", getAllTickets().size()); // TICKET
-        counts.put("totalUsers", getAllUsers().size()); //  / USERS
+        counts.put("TOTAL_TICKETS", getAllTickets().size()); // TICKET
+        counts.put("TOTAL_USERS", getAllUsers().size()); //  / USERS
        
         String[] states = {"OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "CANCELLED"};
         for (String state : states) { counts.put(state, filterTickets("STATE", state).size()); } // States

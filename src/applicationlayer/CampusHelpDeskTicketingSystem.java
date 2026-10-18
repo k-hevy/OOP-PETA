@@ -34,7 +34,11 @@ public class CampusHelpDeskTicketingSystem {
             loginMenu.run();
             User user = loginMenu.getAuthenticatedUser();
             if (user == null ) { break; }
-            launchMenu(user).run();
+            try {
+                launchMenu(user).run();
+            } catch (IllegalStateException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
             System.out.println("You have been logged Out");
         }
     } // Main Loop of whole System
@@ -46,6 +50,7 @@ public class CampusHelpDeskTicketingSystem {
         if (user instanceof SupportAgent agent)  return new SupportAgentMenu(agent, input, repository);
         if (user instanceof Requestor requestor) return new RequestorMenu(requestor, input, repository);
         throw new IllegalStateException("No menu for " + user.getRole());
+
     }
 
     public static void seedData(Repository repo) {

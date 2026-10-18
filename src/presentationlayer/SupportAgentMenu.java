@@ -44,11 +44,11 @@ public class SupportAgentMenu extends BaseMenu {
     protected void executeChoice(int choice) {
         switch (choice) {
             case 1 -> { viewAssignedTickets(); }
-            case 2 -> { viewDetailedTicket();     } 
+            case 2 -> { viewTicketDetails();     } 
             case 3 -> { updateTicketState();      } 
-            case 4 -> { updatePriority();         }
+            case 4 -> { updateTicketPriority();         }
             case 5 -> { addComment();             }
-            case 0 -> { System.out.println("Logging out..."); stop();}
+            case 0 -> { System.out.println("Logging out. Goodbye!"); stop();}
         }
     }
 
@@ -77,7 +77,7 @@ public class SupportAgentMenu extends BaseMenu {
         }
     }
 
-    public void viewDetailedTicket() {
+    public void viewTicketDetails() {
         System.out.println("\n====== View Ticket Details ======");
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
@@ -94,8 +94,10 @@ public class SupportAgentMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = supportAgent.getTicket(ticketId);
+            ticket.requireNotFinished();
             String oldState = ticket.getState();
             String newState = readAgentState();
+            ticket.requireTransition(newState);
             if (confirm("Change ticket state from " + oldState + " to " + newState + "?")) {
                 String reason = readLine("Enter a reason: ", false);
                 supportAgent.updateTicketState(ticketId, newState, reason);
@@ -109,18 +111,19 @@ public class SupportAgentMenu extends BaseMenu {
         waitForEnter();
     }
 
-    public void updatePriority() {
+    public void updateTicketPriority() {
         System.out.println("\n====== Update Ticket Priority ======");
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = supportAgent.getTicket(ticketId);
+            ticket.requireNotFinished();
             String oldPriority = ticket.getPriority();
             String newPriority = readPriority();
             if (confirm("Change ticket priority from " + oldPriority + " to " + newPriority + "?")) {
                 String reason = readLine("Enter a reason: ", false);
                 supportAgent.updatePriority(ticketId, newPriority, reason);
-                System.out.println("Ticket priority changed successful.");
-            } else {
+                System.out.println("Success! Ticket priority has been changed from " + oldPriority  + " to " + newPriority);
+            } else { 
                 System.out.println("Ticket priority change Cancelled.");
             }
         } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
@@ -134,6 +137,7 @@ public class SupportAgentMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = supportAgent.getTicket(ticketId);
+            ticket.requireNotFinished();
             String message = readLine("Enter comment: ", false);
             supportAgent.addComment(ticketId, message);
             System.out.println("Success! Comment added to " + ticket.getTicketId() + ".");
@@ -189,7 +193,7 @@ public class SupportAgentMenu extends BaseMenu {
         System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
         for (TicketLogEntry log : t.getTicketLogEntries()) {
             String modifierName = log.getChangedByUserId().equals(supportAgent.getUserId()) ? "You" : log.getChangedByUserName();
-            System.out.printf("[%s] %-30s by %-12s | %s%n", log.getTime(), (log.getPreviousState() + " -> " + log.getNewState()), modifierName, log.getReason());
+            System.out.printf("[%s] %-25s by %-12s | %s%n", log.getTime(), (log.getPreviousState() + " -> " + log.getNewState()), modifierName, log.getReason());
         }
         System.out.println(LINE);
     }

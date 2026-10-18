@@ -14,7 +14,7 @@ public class LoginMenu extends BaseMenu {
 
     @Override
     protected void displayMenu() {
-            System.out.println("\n=== SYSTEM LOGIN ===" );
+            System.out.println("=== SYSTEM LOGIN ===" );
             System.out.println("[1] LOGIN");
             System.out.println("[0] EXIT");
     }
@@ -28,6 +28,7 @@ public class LoginMenu extends BaseMenu {
                 stop();
             }
         }
+        waitForEnter();
     }
 
     @Override
@@ -42,9 +43,11 @@ public class LoginMenu extends BaseMenu {
 
     private void handleLogin() {
 
-        System.out.println("\n--- Please Enter Credentials ---");
+        System.out.println("\n=== Please Enter Credentials ===");
         String userId = readLine("User ID (e.g., REQ-001): ", false);
         String userPassword = readLine("Password: ", false);
+
+        System.out.println();
 
         User foundUser = repository.findUserById(userId);
         if (foundUser == null || !foundUser.checkPassword(userPassword)) {
@@ -54,7 +57,6 @@ public class LoginMenu extends BaseMenu {
 
         System.out.println("Login Successful! Welcome, " + foundUser.getFullName() + " (" + foundUser.getRole() + ")");
         authenticatedUser = foundUser;
-        waitForEnter();
         stop();
 
     }
