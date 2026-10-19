@@ -39,7 +39,8 @@ public class Ticket {
     public SupportAgent getAssignedAgent() {return assignedAgent;}
     public String getPriority() {return priority;}
     public String getCategory() {return category;}
-    public String getDateSubmitted() {return dateSubmitted.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));}
+    public LocalDateTime getDateSubmitted() { return dateSubmitted; }
+    public String getDateSubmittedFormatted() {return dateSubmitted.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));}
     public String getState() {return state;}
     public String getSubject() { return subject; }
     public String getDescription() {return description;}
@@ -51,6 +52,8 @@ public class Ticket {
     public void setCategory(String category) {this.category = category; }
     public void setSubject(String subject) { this.subject = subject; }
     public void setDescription(String description) {this.description = description;}
+
+    // Actions
 
     public void addComment(Comment comment) {
         if (comment == null) { 
@@ -70,9 +73,20 @@ public class Ticket {
         ticketLogEntries.add(new TicketLogEntry(oldState, this.state, changedBy.getUserId(), changedBy.getFirstName(), reason.trim()));
     }
     
-    public boolean reassignTicket(SupportAgent newAgent, User changedBy, String reason) {
+    public void deletTicket(User by, boolean anyState, String reason) {
+        if (by == null || reason == null) {
+            throw new IllegalArgumentException("User and reason are required.");
+        }
+        requireNotDeleted();
+        if (!anyState) requireActive();
+        String old = state;
+        state = "DELETED";
+        ticketLogEntries.add(new TicketLogEntry(old, state, by.getUserId(), by.getFirstName(), reason.trim()));
+    }
+
+    public void reassignTicket(SupportAgent newAgent, User changedBy, String reason) {
         if (newAgent == null || changedBy == null || reason == null) { 
-            throw new IllegalStateException("Agent, user, and reason cannot be empty"); 
+            throw new IllegalArgumentException("Agent, user, and reason cannot be empty"); 
         }
         requireActive();
         if (newAgent == this.assignedAgent) { 
@@ -87,62 +101,84 @@ public class Ticket {
         String newAgentName = newAgent.getFullName();
         setAssignedAgent(newAgent);
         ticketLogEntries.add(new TicketLogEntry(oldAgentName, newAgentName, changedBy.getUserId(), changedBy.getFirstName(), reason));
-        return true;
     }
     
-    public void changePriority(String newPriority,  String reason, User changedBy) {
+    public void changePriority(String newPriority, User changedBy, String reason) {
         if (newPriority == null || changedBy == null) { 
             throw new IllegalArgumentException("Priority and User are required"); 
         }
         requireNotFinished();
+        if (!(newPriority.equals("LOW") || newPriority.equals("MEDIUM") || newPriority.equals("HIGH") || newPriority.equals("URGENT"))) {
+            throw new IllegalArgumentException("Invalid priority: " + newPriority);
+        }
         if (newPriority.equalsIgnoreCase(getPriority())) { 
             throw new IllegalArgumentException("Ticket " + ticketId + " is already " + priority + " priority"); 
         } 
         ticketLogEntries.add(new TicketLogEntry(priority, newPriority.toUpperCase(), changedBy.getUserId(), changedBy.getFirstName(), reason));
         this.priority = newPriority;
-    } 
+    }     
 
     private String generateTicketId() {
         ticketCounter++;
         return String.format("TK-%03d", ticketCounter);
     } // called whenever a new tikcet is created
 
-    private boolean isValidTransition(String oldState, String newState) {
-        return (oldState.equalsIgnoreCase("OPEN") && newState.equalsIgnoreCase("IN_PROGRESS")) ||
-               (oldState.equalsIgnoreCase("IN_PROGRESS") && newState.equalsIgnoreCase("RESOLVED")) ||
-               (oldState.equalsIgnoreCase("RESOLVED") && newState.equalsIgnoreCase("CLOSED")) ||
-               (oldState.equalsIgnoreCase("OPEN") && newState.equalsIgnoreCase("CANCELLED")) ||
-               (oldState.equalsIgnoreCase("IN_PROGRESS") && newState.equalsIgnoreCase("CANCELLED")) ||
-               (oldState.equalsIgnoreCase("IN_PROGRESS") && newState.equalsIgnoreCase("OPEN")) ||
-               (oldState.equalsIgnoreCase("RESOLVED") && newState.equalsIgnoreCase("IN_PROGRESS"));
-    }    
+    // Helpers
+
+    public boolean isActive() {
+        return (state.equalsIgnoreCase("OPEN") || state.equalsIgnoreCase("IN_PROGRESS"));
+    }
+
+    public boolean isResolved() {
+        return (state.equalsIgnoreCase("RESOLVED"));
+    }
+
+    public boolean isFinished() {
+        return state.equals("CLOSED") || state.equals("DELETED"); 
+    }
+    
+    public boolean isDeleted() {
+        return state.equals("DELETED"); 
+    }
+
+    // Throwers (early throw for UI Experiecne)
+
+    public void requireTransition(String newState) {
+    String target = newState.toUpperCase();
+    if (!isValidTransition(state, target))
+        throw new IllegalStateException("Ticket " + ticketId + " cannot move from " + state + " to " + target + ".");
+    }
 
     public void requireNotFinished() {
-        if (state.equalsIgnoreCase("CLOSED")|| state.equalsIgnoreCase("CANCELLED")) {
+        if (isFinished()) {
             throw new IllegalStateException("Ticket " + ticketId + " is " + state + " and can no longer be changed.");
         }
     }
 
     public void requireActive() {
-        if (!(state.equals("OPEN") || state.equalsIgnoreCase("IN_PROGRESS"))) {
+        if (!isActive()) {
             throw new IllegalStateException("Ticket " + ticketId + " is " + state + ". Only OPEN or IN_PROGRESS tickets allow this.");
         }
     }
 
     public void requireResolved() {
-        if (!state.equals("RESOLVED")) {
+        if (!isResolved()) {
             throw new IllegalStateException("Ticket " + ticketId + " is " + state + ". Only RESOLVED tickets allow this.");
         }
     }
 
-    public void requireTransition(String newState) {
-        if (!isValidTransition(state, newState)) {
-            throw new IllegalStateException("Ticket " + ticketId + " cannot move from " + state + " to " + newState + ".");
-        }
+    public void requireNotDeleted() {
+    if (isDeleted())
+        throw new IllegalStateException("Ticket " + ticketId + " is already DELETED.");
     }
 
-    public boolean isActive() {
-        return (state.equalsIgnoreCase("OPEN") || state.equalsIgnoreCase("IN_PROGRESS"));
-    }
+    private boolean isValidTransition(String from, String to) {
+        return switch(from) {
+            case "OPEN"        -> to.equals("IN_PROGRESS");
+            case "IN_PROGRESS" -> to.equals("RESOLVED") || to.equals("OPEN");
+            case "RESOLVED"    -> to.equals("CLOSED") || to.equals("IN_PROGRESS");
+            default            -> false; 
+            };
+    }    
 
 }

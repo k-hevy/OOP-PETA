@@ -232,15 +232,15 @@ public abstract class BaseMenu {
             System.out.println("[2] IN-PROGRESS");
             System.out.println("[3] RESOLVED");
             System.out.println("[4] CLOSED");
-            System.out.println("[5] CANCELLED");
+            System.out.println("[5] DELETED");
             System.out.println("");
             int choice = readInt("choice: ", 1, 5);
             switch (choice) {
                 case 1 -> { return "OPEN"; }
                 case 2 -> { return "IN_PROGRESS"; }
                 case 3 -> { return "RESOLVED"; }
-                case 4 -> { return "RESOLVED"; }
-                case 5 -> { return "CANCELLED"; }
+                case 4 -> { return "CLOSED"; }
+                case 5 -> { return "DELETED"; }
             }
         }
     }
@@ -255,7 +255,7 @@ public abstract class BaseMenu {
             int choice = readInt("choice: ", 1, 3);
             switch (choice) {
                 case 1 -> { return "REQUESTOR"; }
-                case 2 -> { return "SUPPORTAGENT"; }
+                case 2 -> { return "SUPPORT_AGENT"; }
                 case 3 -> { return "ADMIN"; }
             }
         }

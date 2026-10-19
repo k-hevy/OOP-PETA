@@ -44,10 +44,10 @@ public class SupportAgentMenu extends BaseMenu {
     protected void executeChoice(int choice) {
         switch (choice) {
             case 1 -> { viewAssignedTickets(); }
-            case 2 -> { viewTicketDetails();     } 
-            case 3 -> { updateTicketState();      } 
-            case 4 -> { updateTicketPriority();         }
-            case 5 -> { addComment();             }
+            case 2 -> { viewTicketDetails(); } 
+            case 3 -> { updateTicketState(); } 
+            case 4 -> { updateTicketPriority(); }
+            case 5 -> { addComment(); }
             case 0 -> { System.out.println("Logging out. Goodbye!"); stop();}
         }
     }
@@ -180,7 +180,7 @@ public class SupportAgentMenu extends BaseMenu {
         System.out.printf("%-13s : %s%n", "Subject", t.getSubject());
         System.out.printf("%-13s : %s%n", "Priority", t.getPriority());
         System.out.printf("%-13s : %s%n", "State", t.getState());
-        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmitted());
+        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmittedFormatted());
         System.out.printf("%-13s : %s%n", "Description", t.getDescription());
         System.out.println();
 

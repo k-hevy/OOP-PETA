@@ -17,7 +17,7 @@ public class Requestor extends User {
     @Override
     public Ticket getTicket(String ticketId) {
         Ticket ticket = getRepository().findTicketById(ticketId);
-        if (ticket == null) { 
+        if (ticket == null || ticket.getState().equalsIgnoreCase("DELETED")) { 
             throw new IllegalArgumentException("Ticket " + ticketId +" was not found."); 
         }
         if (ticket.getSubmittedBy() == null || !ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId())) { 
@@ -35,26 +35,18 @@ public class Requestor extends User {
     }
     
     public void submitTicket(Ticket ticket) {
-        if (ticket == null) { 
-            throw new IllegalArgumentException("Cannot submit an empty Ticket"); 
-        }
         autoAssignAgent(ticket); // tickets stays unassigned if no agent matches
         getRepository().addTicket(ticket);
      }
      
-    public void cancelTicket(String ticketId, String reason) {
+    public void deleteTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
-        if (!(ticket.getState().equalsIgnoreCase("OPEN") || ticket.getState().equalsIgnoreCase("IN_PROGRESS"))) {
-            throw new IllegalStateException("Ticket " + ticket.getTicketId() + " is " + ticket.getState() + ". Only OPEN or IN_PROGRESS tickets can be cancelled.");
-        }
-        ticket.changeState("CANCELLED", this, reason);
+        ticket.deletTicket(this, false, reason); 
      }
      
     public void reopenTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
-        if (!ticket.getState().equalsIgnoreCase("RESOLVED")) { 
-            throw new IllegalStateException("Ticket " + ticket.getTicketId() + " is " + ticket.getState() + ". Only RESOLVED tickets can be reopened.");
-        }
+        ticket.requireResolved();
         ticket.changeState("IN_PROGRESS", this, reason);
     }
      
@@ -65,18 +57,15 @@ public class Requestor extends User {
 
     public void closeTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
-        if (!ticket.getState().equalsIgnoreCase("RESOLVED")) { 
-            throw new IllegalStateException("Ticket " + ticket.getTicketId() + " is " + ticket.getState() + ". Only RESOLVED tickets can be closed.");
-        }
         ticket.changeState("CLOSED", this, reason);
     }
 
-    public ArrayList<Ticket> getMyTickets() {
+    public ArrayList<Ticket> getSubmittedTickets() {
         ArrayList<Ticket> myTickets = new ArrayList<>();
         ArrayList<Ticket> allTickets = getRepository().getAllTickets();
         if (allTickets == null ) { return myTickets; }
         for (Ticket ticket : allTickets) {
-                if (ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId())) {
+                if (ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId()) && !ticket.getState().equalsIgnoreCase("DELETED")) {
                     myTickets.add(ticket);
                 }
             }
@@ -85,7 +74,7 @@ public class Requestor extends User {
     
     public ArrayList<Ticket> getActiveTickets() {
         ArrayList<Ticket> myTickets = new ArrayList<>();
-        for (Ticket ticket : getMyTickets()) {
+        for (Ticket ticket : getSubmittedTickets()) {
             String state = ticket.getState();
             if (state.equalsIgnoreCase("OPEN") || state.equalsIgnoreCase("IN_PROGRESS")) {
                 myTickets.add(ticket);
@@ -95,6 +84,7 @@ public class Requestor extends User {
      } 
 
     private boolean autoAssignAgent(Ticket ticket) {
+
         ArrayList<User> users = getRepository().getAllUsers();
         if (users == null) { return false; }
 
@@ -118,6 +108,7 @@ public class Requestor extends User {
             return true;
         } 
         return false;
+
     } 
 
 }

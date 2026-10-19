@@ -32,7 +32,7 @@ public class SupportAgent extends User {
     @Override
     public Ticket getTicket(String ticketId) {
         Ticket ticket = getRepository().findTicketById(ticketId);
-        if (ticket == null) {
+        if (ticket == null || ticket.getState().equalsIgnoreCase("DELETED")) {
             throw new IllegalArgumentException("Ticket " + ticketId + " was not found.");
         }
         if (ticket.getAssignedAgent() == null || !ticket.getAssignedAgent().getUserId().equalsIgnoreCase(getUserId()) ) { 
@@ -51,10 +51,7 @@ public class SupportAgent extends User {
     }
 
     public void updateTicketState(String ticketId, String newState, String reason) {
-        if (newState == null || reason == null) {
-            throw new IllegalArgumentException("New state and reason cannot be empty");
-        }
-        if (newState.equalsIgnoreCase("CLOSED") || newState.equalsIgnoreCase("CANCELLED")) {
+        if (newState.equalsIgnoreCase("CLOSED") || newState.equalsIgnoreCase("DELETED")) {
             throw new SecurityException("agent cannot set state to " + newState.toUpperCase());
         }
         Ticket ticket = getTicket(ticketId);
@@ -63,7 +60,7 @@ public class SupportAgent extends User {
 
     public void updatePriority(String ticketId, String newPriority, String reason) {
         Ticket ticket = getTicket(ticketId);
-        ticket.changePriority(newPriority, reason, this);
+        ticket.changePriority(newPriority, this, reason);
     }
 
     public ArrayList<Ticket> getAssignedTickets() {
@@ -72,7 +69,8 @@ public class SupportAgent extends User {
         if (allTickets == null) { return assignedTickets; }
 
         for (Ticket ticket : allTickets) {
-            if (ticket.getAssignedAgent() != null && ticket.getAssignedAgent().getUserId().equalsIgnoreCase(getUserId())) {
+            if (ticket.getAssignedAgent() != null && ticket.getAssignedAgent().getUserId().equalsIgnoreCase(getUserId()) &&
+                !ticket.getState().equalsIgnoreCase("DELETED")) {
                 assignedTickets.add(ticket);
             }
         }

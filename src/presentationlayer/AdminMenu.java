@@ -31,7 +31,7 @@ public class AdminMenu extends BaseMenu {
         System.out.println("[3] View All Tickets");
         System.out.println("[4] View Ticket Details");
         System.out.println("[5] Reassign Ticket");
-        System.out.println("[6] Reject Ticket");
+        System.out.println("[6] Delete Ticket");
         System.out.println("[7] Generate Summary Report");
         System.out.println("[0] Logout");
     }
@@ -44,7 +44,7 @@ public class AdminMenu extends BaseMenu {
             case 3 -> { viewAllTickets(); }
             case 4 -> { viewTicketDetails(); }
             case 5 -> { reassignTicket(); }
-            case 6 -> { rejectTicket();}
+            case 6 -> { deleteTicket();}
             case 7 -> { generateSummaryReport(); }
             case 0 -> { System.out.println("Logging out. Goodbye!"); stop(); }
         }
@@ -111,7 +111,7 @@ public class AdminMenu extends BaseMenu {
         while (true) {
             System.out.println("\n====== View All Tickets ======");
             System.out.println("[1] All tickets");
-            System.out.println("[2] Filter by State (OPEN, IN_PROGRESS, RESOLVED, CLOSED, CANCELLED)");
+            System.out.println("[2] Filter by State (OPEN, IN_PROGRESS, RESOLVED, CLOSED, DELETED)");
             System.out.println("[3] Filter by Category");
             System.out.println("[4] Filter by Priority (URGENT, HIGH, MEDIUM, LOW)");
             System.out.println("[5] Filter by Requestor ID");
@@ -140,6 +140,11 @@ public class AdminMenu extends BaseMenu {
                 tickets = admin.filterTickets(field, value);
             }
             System.out.println();
+            tickets.sort((t1, t2) -> {
+                if (t1.getState().equals("DELETED") && !t2.getState().equals("DELETED")) return 1; // swap if t1 if deleted and t2 isnt
+                if (!t1.getState().equals("DELETED") && t2.getState().equals("DELETED")) return -1; // dont swap t1 isnt deleted but t2 is
+                return 0; 
+            });
             displaySummarizedTickets(tickets);
             waitForEnter();
         }
@@ -169,7 +174,7 @@ public class AdminMenu extends BaseMenu {
                 admin.reassignTicket(ticketId, agentId, reason);
                 System.out.println("Success! Ticket " + ticket.getTicketId() + " has been reassigned. to " + agentId);
             } else {
-                 System.out.println("Reassignment Aborted");
+                 System.out.println("Reassignment Cancelled");
             }
         } catch (IllegalArgumentException | IllegalStateException  e) {
             System.out.println("Error: " + e.getMessage());
@@ -177,18 +182,18 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
-    public void rejectTicket() {
-        System.out.println("\n====== Reject a Ticket ======");
+    public void deleteTicket() {
+        System.out.println("\n====== Delete a Ticket ======");
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = admin.getTicket(ticketId);
-            ticket.requireTransition("CANCELLED");
-            if (confirm("Reject Ticket " + ticket.getTicketId() + "?")) {
-                String reason = readLine("Provide a reason for Rejection: ", false);
-                admin.rejectTicket(ticketId, reason);
-                System.out.println("Success! Ticket " + ticket.getTicketId() + " has been rejected.");
+            ticket.requireNotDeleted();
+            if (confirm("Delete Ticket " + ticket.getTicketId() + "?")) {
+                String reason = readLine("Provide a reason for Deletion: ", false);
+                admin.deleteTicket(ticketId, reason);
+                System.out.println("Success! Ticket " + ticket.getTicketId() + " has been Deleted.");
             } else {
-                 System.out.println("Rejection Aborted");
+                 System.out.println("Deletion Cancelled");
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
             System.out.println("Error: " + e.getMessage());
@@ -201,8 +206,8 @@ public class AdminMenu extends BaseMenu {
         LinkedHashMap<String, Integer> counts = admin.getSummaryCounts();
         String titles[] = {"Overview", "By State", "By Priority", "By Category"};
         String groups[][] = {
-            {"TOTAL_TICKETS", "TOTAL_USERS", "UNASSIGNED"},
-            {"OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "CANCELLED"},
+            {"TOTAL_TICKETS", "TOTAL_USERS", "UNASSIGNED_TICKETS"},
+            {"OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "DELETED"},
             {"URGENT", "HIGH", "MEDIUM", "LOW"},
             {"FACILITIES_MAINTENANCE", "SOFTWARE_SYSTEMS", "NETWORK", "HARDWARE", "ACCOUNT_SECURITY"}
         };
@@ -229,7 +234,7 @@ public class AdminMenu extends BaseMenu {
         System.out.printf("%-13s : %s%n", "Subject", t.getSubject());
         System.out.printf("%-13s : %s%n", "Priority", t.getPriority());
         System.out.printf("%-13s : %s%n", "State", t.getState());
-        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmitted());
+        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmittedFormatted());
         System.out.printf("%-13s : %s%n", "Description", t.getDescription());
         System.out.println();
 

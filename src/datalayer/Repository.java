@@ -8,6 +8,7 @@ public class Repository {
 
     private final ArrayList<User> users;
     private final ArrayList<Ticket> tickets;
+    
 
     public Repository() {
         users = new ArrayList<>();

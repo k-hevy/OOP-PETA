@@ -23,7 +23,7 @@ public class RequestorMenu extends BaseMenu {
         System.out.println("[2] View My Tickets");
         System.out.println("[3] View Detailed Ticket");
         System.out.println("[4] Add Comment To Ticket");
-        System.out.println("[5] Cancel Ticket");
+        System.out.println("[5] Delete Ticket");
         System.out.println("[6] Reopen Ticket");
         System.out.println("[7] Close Ticket");
         System.out.println("[0] Logout");
@@ -35,8 +35,8 @@ public class RequestorMenu extends BaseMenu {
             case 1 -> { createTicket(); }
             case 2 -> { viewMyTickets(); } 
             case 3 -> { viewTicketDetails(); } 
-            case 4 -> { addCommentToTicket(); } 
-            case 5 -> { cancelTicket(); } 
+            case 4 -> { addComment(); } 
+            case 5 -> { deleteTicket(); } 
             case 6 -> { reopenTicket(); } 
             case 7 -> { closeTicket(); } 
             case 0 -> { System.out.println("Logging out. Goodbye!"); stop(); } // Ends the console loop after displaying the logout message.
@@ -81,7 +81,7 @@ public class RequestorMenu extends BaseMenu {
 
     public void viewMyTickets() {
         while (true) {
-            ArrayList<Ticket> tickets = requestor.getMyTickets();
+            ArrayList<Ticket> tickets = requestor.getSubmittedTickets();
             if (tickets.isEmpty()) {
                 System.out.println("No submitted tickets found.");
                 waitForEnter();
@@ -117,7 +117,7 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     }
 
-    public void addCommentToTicket() {
+    public void addComment() {
         System.out.println("\n====== Add comment to Ticket ======");
 
         String ticketId = readLine("Enter ticket iD: ", false);
@@ -138,18 +138,18 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     }
 
-    public void cancelTicket() {
-        System.out.println("\n====== Cancel a Ticket ======");
+    public void deleteTicket() {
+        System.out.println("\n====== Delete a Ticket ======");
         String ticketId = readLine("Enter ticket iD: ", false);
         try {
             Ticket ticket = requestor.getTicket(ticketId);
-            ticket.requireTransition("CANCELLED");
-            if(confirm("Are you sure you want to Cancel ticket " + ticket.getTicketId() + "?")) {
-                String reason = readLine("Please provide a reason for cancellation: ", false);
-                requestor.cancelTicket(ticketId, reason);
-                System.out.println("Success! Ticket " + ticket.getTicketId() + " has successfully been cancelled.");
+            ticket.requireActive();
+            if(confirm("Are you sure you want to Delete ticket " + ticket.getTicketId() + "?")) {
+                String reason = readLine("Please provide a reason for Deletion: ", false);
+                requestor.deleteTicket(ticketId, reason);
+                System.out.println("Success! Ticket " + ticket.getTicketId() + " has successfully been Deleted.");
             } else {
-                System.out.println("Cancellation aborted");
+                System.out.println("Deletion cancelled");
             }
         } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
             System.out.println("Error: " + e.getMessage());
@@ -169,7 +169,7 @@ public class RequestorMenu extends BaseMenu {
                 requestor.reopenTicket(ticketId, reason);
                 System.out.println("Success! Ticket " + ticket.getTicketId() + " has successfully been re-opened.");
             } else {
-                System.out.println("Reopening aborted");
+                System.out.println("Reopening Cancelled");
             }
         } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
             System.out.println("Error: " + e.getMessage());
@@ -189,7 +189,7 @@ public class RequestorMenu extends BaseMenu {
                 requestor.closeTicket(ticketId, reason);
                 System.out.println("Success! Ticket " + t.getTicketId() + " has successfully been Closed.");
             } else {
-                System.out.println("Ticket closing aborted");
+                System.out.println("Ticket closing Cancelled");
             }
         } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
             System.out.println("Error: " + e.getMessage());
@@ -206,7 +206,7 @@ public class RequestorMenu extends BaseMenu {
         System.out.printf("%-13s : %s%n", "Priority", t.getPriority());
         System.out.printf("%-13s : %s%n", "State", t.getState());
         System.out.printf("%-13s : %s%n", "Agent", agentName);
-        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmitted());
+        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmittedFormatted());
         System.out.printf("%-13s : %s%n", "Description", t.getDescription());
         System.out.println();
 

@@ -109,15 +109,15 @@ public class CampusHelpDeskTicketingSystem {
         SupportAgent t3Agent = (SupportAgent) repo.findUserById("AGT-003");
         t3Agent.updateTicketState(t3.getTicketId(), "IN_PROGRESS", "Reproducing the login error");
 
-        // T4: CANCELLED by admin (NETWORK -> Nina)
+        // T4: DELETED by admin (NETWORK -> Nina)
         Ticket t4 = faculty2.createTicket("URGENT", "NETWORK", "Campus Wi-Fi Disconnect", "Wi-Fi down in hall");
         faculty2.submitTicket(t4);
-        admin.rejectTicket(t4.getTicketId(), "Duplicate ticket request");
+        admin.deleteTicket(t4.getTicketId(), "Duplicate ticket request");
 
-        // T5: CANCELLED by requestor
+        // T5: DELETED by requestor
         Ticket t5 = student3.createTicket("LOW", "HARDWARE", "Printer & Copier Jam", "Printer jam in Lab 2");
         student3.submitTicket(t5);
-        student3.cancelTicket(t5.getTicketId(), "Jam cleared by a classmate");
+        student3.deleteTicket(t5.getTicketId(), "Jam cleared by a classmate");
 
         // T6: RESOLVED, waiting for requestor to close (HARDWARE -> Hank)
         Ticket t6 = student3.createTicket("HIGH", "HARDWARE", "Classroom AV & Projector", "Projector has no signal in Room 210");

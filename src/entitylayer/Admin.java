@@ -38,21 +38,18 @@ public class Admin extends User {
         }
         return user;
     }
-
+    
     // Getters
     public String getEmployeeId() { return employeeId; }
     public String getManagedDepartment() { return managedDepartment; }
     public String getDeskExtension() { return deskExtension;  }
-    
+
     // Setters
     public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
     public void setManagedDepartment(String managedDepartment) { this.managedDepartment = managedDepartment; }
     public void setDeskExtension(String deskExtension) { this.deskExtension = deskExtension; }
 
     public void reassignTicket(String ticketId, String agentId, String reason) {
-        if (agentId == null || reason == null) {
-            throw new IllegalArgumentException("AgentId and reason are required");
-        }
         Ticket ticket = getTicket(ticketId);
         User user = getRepository().findUserById(agentId);
 
@@ -62,9 +59,9 @@ public class Admin extends User {
         ticket.reassignTicket(agent, this, reason);
     } 
 
-    public void rejectTicket(String ticketId, String reason) {
+    public void deleteTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId);
-        ticket.changeState("CANCELLED", this, reason);
+        ticket.deletTicket(this, true, reason);
     }
 
     public ArrayList<Ticket> getAllTickets() {
@@ -128,14 +125,14 @@ public class Admin extends User {
         counts.put("TOTAL_TICKETS", getAllTickets().size()); // TICKET
         counts.put("TOTAL_USERS", getAllUsers().size()); //  / USERS
        
-        String[] states = {"OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "CANCELLED"};
+        String[] states = {"OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "DELETED"};
         for (String state : states) { counts.put(state, filterTickets("STATE", state).size()); } // States
         String[] priorities = {"LOW", "MEDIUM", "HIGH", "URGENT"};
         for (String priority : priorities ) { counts.put(priority, filterTickets("PRIORITY", priority).size()); } // PRIORITY
         String[] categories = {"FACILITIES_MAINTENANCE", "SOFTWARE_SYSTEMS", "NETWORK", "HARDWARE", "ACCOUNT_SECURITY"};
         for (String category : categories) { counts.put(category, filterTickets("CATEGORY", category).size()); } // CATEGORY
 
-        counts.put("UnassignedTickets", filterTickets("AGENT", "UNASSIGNED").size()); // Others
+        counts.put("UNASSIGNED_TICKETS", filterTickets("AGENT", "UNASSIGNED").size()); // Others
         return counts;
     }
 
