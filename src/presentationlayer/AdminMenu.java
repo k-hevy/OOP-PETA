@@ -246,7 +246,7 @@ public class AdminMenu extends BaseMenu {
 
         System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
         for (TicketLogEntry log : t.getTicketLogEntries()) {
-            System.out.printf("[%s] %-25s by %-12s | %s%n",
+            System.out.printf("[%s] %-30s by %-12s | %s%n",
                 log.getTime(),
                 log.getPreviousState() + " -> " + log.getNewState(),
                 log.getChangedByUserName(),

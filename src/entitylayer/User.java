@@ -2,7 +2,6 @@ package entitylayer;
 
 import datalayer.Repository;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 
 public abstract class User {
 
@@ -40,7 +39,6 @@ public abstract class User {
     public LocalDateTime getDateRegistered() { return dateRegistered; }
     public String getDateRegisteredFormatted() {return dateRegistered.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm"));}
     protected Repository getRepository() {return repository;}
-    public ArrayList<TicketLogEntry> getTicketHistory(String ticketId) { Ticket ticket = getTicket(ticketId); return (ticket == null) ? new ArrayList<>() : ticket.getTicketLogEntries(); }
 
     // Others
     public boolean checkPassword(String password) { return this.password != null && this.password.equals(password); } 

@@ -186,7 +186,7 @@ public class SupportAgentMenu extends BaseMenu {
 
         System.out.println("--- Comments (" + t.getComments().size() + ") ---");
         for (Comment c : t.getComments()) {
-            System.out.printf("[%s] %-20s : %s%n", c.getTime(), c.getAuthorName(), c.getMessage());
+            System.out.printf("[%s] %-30s : %s%n", c.getTime(), c.getAuthorName(), c.getMessage());
         }
         System.out.println();
 

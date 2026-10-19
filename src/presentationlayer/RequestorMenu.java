@@ -218,7 +218,7 @@ public class RequestorMenu extends BaseMenu {
 
         System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
         for (TicketLogEntry log : t.getTicketLogEntries()) {
-            System.out.printf("[%s] %-25s | %s%n", log.getTime(), (log.getPreviousState() + " -> " + log.getNewState()),  log.getReason() );
+            System.out.printf("[%s] %-30s | %s%n", log.getTime(), (log.getPreviousState() + " -> " + log.getNewState()),  log.getReason() );
         }
         System.out.println(LINE+ " TICKET " + t.getTicketId()  + " " + LINE);
     }
