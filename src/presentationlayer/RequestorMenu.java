@@ -183,7 +183,7 @@ public class RequestorMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket iD: ", false);
         try {
             Ticket t = requestor.getTicket(ticketId);
-            t.requireTransition("CLOSED");
+            t.checkTransition("CLOSED");
             if(confirm("Are you sure you want to Close ticket " + t.getTicketId() + "?")) {
                 String reason = readLine("Please provide a reason for Closing: ", false);
                 requestor.closeTicket(ticketId, reason);

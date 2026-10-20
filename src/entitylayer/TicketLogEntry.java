@@ -11,7 +11,7 @@ public class TicketLogEntry {
     private final String changedByUserName;
     private final LocalDateTime timestamp;
     private final String reason;
-    private static  int ticketLogEntryCounter = 0;
+    private static int ticketLogEntryCounter = 0;
 
     public TicketLogEntry(String previousState, String newState, String changedByUserId, String changedByUserName, String reason) {
         this.ticketLogEntryId = generateTicketLogEntryId();
@@ -32,7 +32,7 @@ public class TicketLogEntry {
     public String getReason() { return reason; }
 
     private String generateTicketLogEntryId() {
-    ticketLogEntryCounter++;
+        ticketLogEntryCounter++;
         return String.format("LG-%03d", ticketLogEntryCounter);
     } // called whenever a new log is created
 

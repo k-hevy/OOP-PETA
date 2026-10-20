@@ -97,7 +97,7 @@ public class SupportAgentMenu extends BaseMenu {
             ticket.requireNotFinished();
             String oldState = ticket.getState();
             String newState = readAgentState();
-            ticket.requireTransition(newState);
+            ticket.checkTransition(newState);
             if (confirm("Change ticket state from " + oldState + " to " + newState + "?")) {
                 String reason = readLine("Enter a reason: ", false);
                 supportAgent.updateTicketState(ticketId, newState, reason);
