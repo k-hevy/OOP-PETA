@@ -25,7 +25,7 @@ public class AdminMenu extends BaseMenu {
 
     @Override
     protected void displayMenu() {
-        System.out.println("---- ADMIN MENU ----");
+        printHeader("ADMIN MENU");
         System.out.println("[1] View All Users");
         System.out.println("[2] View User Details");
         System.out.println("[3] View All Tickets");
@@ -62,7 +62,7 @@ public class AdminMenu extends BaseMenu {
 
     public void viewAllUsers() {
         while (true) {
-            System.out.println("\n====== View All Users ======");
+            printHeader("View All Users");
             System.out.println("[1] All users");
             System.out.println("[2] Filter by ID");
             System.out.println("[3] Filter by Role (REQUESTOR, SUPPORTAGENT, ADMIN)");
@@ -90,13 +90,13 @@ public class AdminMenu extends BaseMenu {
                  users = admin.filterUsers(field, value);
             }
             System.out.println();
-            displaySummarizedUser(users);
+            displayUsers(users);
             waitForEnter();
         }
     }
 
     public void viewUserDetails() {
-        System.out.println("\n====== View User Details ======");
+        printHeader("View User Details");
         String userId = readLine("Enter User ID: ", false);
         try {
             User foundUser = admin.getUser(userId);
@@ -109,7 +109,7 @@ public class AdminMenu extends BaseMenu {
 
     public void viewAllTickets() {
         while (true) {
-            System.out.println("\n====== View All Tickets ======");
+            printHeader("View All Tickets");
             System.out.println("[1] All tickets");
             System.out.println("[2] Filter by State (OPEN, IN_PROGRESS, RESOLVED, CLOSED, DELETED)");
             System.out.println("[3] Filter by Category");
@@ -122,7 +122,7 @@ public class AdminMenu extends BaseMenu {
 
             if (choice == 0) { System.out.println("Returning to previous menu..."); return;}
             ArrayList<Ticket> tickets;
-            if (choice == 1) { tickets = admin.getAllTickets(); } else {
+            if (choice == 1) { tickets = admin.getTickets(); } else {
                 String field = switch (choice) {
                     case 2  -> "STATE";
                     case 3  -> "CATEGORY";
@@ -145,25 +145,25 @@ public class AdminMenu extends BaseMenu {
                 if (!t1.getState().equals("DELETED") && t2.getState().equals("DELETED")) return -1; // dont swap t1 isnt deleted but t2 is
                 return 0; 
             });
-            displaySummarizedTickets(tickets);
+            displayTickets(tickets);
             waitForEnter();
         }
     }
 
     public void viewTicketDetails() {
-        System.out.println("\n====== View Ticket Details ======");
+        printHeader("View Ticket Details");
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = admin.getTicket(ticketId);
             viewTicketDetails(ticket);
         } catch (IllegalArgumentException e) {
-            System.out.println("Error: " + e.getMessage());
+            printError(e.getMessage());
         }
         waitForEnter();
     }
 
     public void reassignTicket() {
-        System.out.println("\n====== Reassign a Ticket ======");
+        printHeader("Reassign a Ticket");
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = admin.getTicket(ticketId);
@@ -183,7 +183,7 @@ public class AdminMenu extends BaseMenu {
     }
 
     public void deleteTicket() {
-        System.out.println("\n====== Delete a Ticket ======");
+        printHeader("Delete a Ticket");
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = admin.getTicket(ticketId);
@@ -196,13 +196,13 @@ public class AdminMenu extends BaseMenu {
                  System.out.println("Deletion Cancelled");
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
-            System.out.println("Error: " + e.getMessage());
+            printError(e.getMessage());
         }
         waitForEnter();
     }
 
     public void generateSummaryReport() {
-        System.out.println("\n====== Summary Report ======");
+        printHeader("Summary Report");
         LinkedHashMap<String, Integer> counts = admin.getSummaryCounts();
         String titles[] = {"Overview", "By State", "By Priority", "By Category"};
         String groups[][] = {
@@ -214,7 +214,8 @@ public class AdminMenu extends BaseMenu {
         for(int i = 0; i < titles.length; i++) {
             System.out.println("----" + titles[i] + "----");
             for (String key : groups[i]) {
-                System.out.printf("%-24s : %d%n", key, counts.get(key));
+                printField(key, String.valueOf(counts.get(key)));
+                
             }
             System.out.println();
         }
@@ -240,14 +241,14 @@ public class AdminMenu extends BaseMenu {
 
         System.out.println("--- Comments (" + t.getComments().size() + ") ---");
         for (Comment c : t.getComments()) {
-            System.out.printf("[%s] %-20s : %s%n", c.getTime(), c.getAuthorName(), c.getMessage());
+            System.out.printf("[%s] %-20s : %s%n", formatDate(c.getTimestamp()), c.getAuthorName(), c.getMessage());
         }
         System.out.println();
 
         System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
         for (TicketLogEntry log : t.getTicketLogEntries()) {
             System.out.printf("[%s] %-30s by %-12s | %s%n",
-                log.getTime(),
+                formatDate(log.getTimestamp()),
                 log.getPreviousState() + " -> " + log.getNewState(),
                 log.getChangedByUserName(),
                 log.getReason()
@@ -256,39 +257,13 @@ public class AdminMenu extends BaseMenu {
         System.out.println(LINE);
     }
 
-    private void displaySummarizedTickets(ArrayList<Ticket> tickets) {
-        if (tickets.isEmpty()) {
-            System.out.println("No tickets found.");
-            return;
-        }
-
-        System.out.printf("%-10s | %-15s | %-15s | %-15s | %-20s | %-10s | %-12s | %s%n", "ID", "Requestor", "Agent", "Category", "Subject", "Priority", "State", "Description");
-        System.out.println("-".repeat(148));
-
-        for (Ticket t : tickets) {
-            String requestorName = (t.getSubmittedBy() != null) ? t.getSubmittedBy().getFullName() : "Unknown";
-            String agentName = (t.getAssignedAgent() != null) ? t.getAssignedAgent().getFullName() : "Unassigned";
-            System.out.printf("%-10s | %-15s | %-15s | %-15s | %-20s | %-10s | %-12s | %s%n",
-                truncate(t.getTicketId(), 10),
-                truncate(requestorName, 15),
-                truncate(agentName, 15),
-                truncate(t.getCategory(), 15),
-                truncate(t.getSubject(), 20),
-                truncate(t.getPriority(), 10),
-                truncate(t.getState(), 12),
-                truncate(t.getDescription(), 30)
-            );
-        }
-        System.out.println();
-    }
-
     private void viewUserDetails(User user) {
 
         System.out.println();
         System.out.println("======== User " + user.getUserId() + " ========");
         System.out.printf("%-16s : %s%n", "Full Name", user.getFullName());
         System.out.printf("%-16s : %s%n", "Email", user.getEmail());
-        System.out.printf("%-16s : %s%n", "Date Registered", user.getDateRegisteredFormatted());
+        System.out.printf("%-16s : %s%n", "Date Registered", formatDate(user.getDateRegistered()));
 
         if (user instanceof Student student) {
             System.out.printf("%-16s : %s%n", "StudentId", student.getStudentId());
@@ -311,18 +286,18 @@ public class AdminMenu extends BaseMenu {
             System.out.printf("%-16s : %s%n", "Desk-Extension", supportAgent.getDeskExtension());
         }
 
-        if (user instanceof Admin admin) {
-            System.out.printf("%-16s : %s%n", "EmployeeId", admin.getEmployeeId());
-            System.out.printf("%-16s : %s%n", "Specialization", admin.getManagedDepartment());
-            System.out.printf("%-16s : %s%n", "Desk-Extension", admin.getDeskExtension());
+        if (user instanceof Admin adminUser) {
+            System.out.printf("%-16s : %s%n", "EmployeeId", adminUser.getEmployeeId());
+            System.out.printf("%-16s : %s%n", "Specialization", adminUser.getManagedDepartment());
+            System.out.printf("%-16s : %s%n", "Desk-Extension", adminUser.getDeskExtension());
         }
 
 
     }
 
-    private void displaySummarizedUser(ArrayList<User> users) {
-         if (users.isEmpty()) {
-            System.out.println("No users found.");
+    private void displayUsers(ArrayList<User> users) {
+        if (users.isEmpty()) {
+            printError("No users found.");
             return;
         }
         System.out.printf("%-10s | %-13s | %-20s | %s%n ", "ID", "Role", "Name", "Email");
@@ -340,5 +315,6 @@ public class AdminMenu extends BaseMenu {
         }
         System.out.println();
     }
+
 
 }

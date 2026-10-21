@@ -9,8 +9,7 @@ private String program;
 private int yearLevel;
 private String section;
 
-public Student(String userId, String firstName, String lastName, String email, String password, Repository repository,
-               String studentId, String program, int yearLevel, String section) {
+public Student(String userId, String firstName, String lastName, String email, String password, Repository repository, String studentId, String program, int yearLevel, String section) {
         super(userId, firstName, lastName, email, password, repository);
         this.studentId = studentId;
         this.program = program;

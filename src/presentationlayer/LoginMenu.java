@@ -1,7 +1,9 @@
 package presentationlayer;
 
 import datalayer.Repository;
+import entitylayer.Ticket;
 import entitylayer.User;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class LoginMenu extends BaseMenu {
@@ -14,9 +16,9 @@ public class LoginMenu extends BaseMenu {
 
     @Override
     protected void displayMenu() {
-            System.out.println("=== SYSTEM LOGIN ===" );
-            System.out.println("[1] LOGIN");
-            System.out.println("[0] EXIT");
+        printHeader("SYSTEM LOGIN");
+        System.out.println("[1] LOGIN");
+        System.out.println("[0] EXIT");
     }
 
     @Override
@@ -43,7 +45,7 @@ public class LoginMenu extends BaseMenu {
 
     private void handleLogin() {
 
-        System.out.println("\n=== Please Enter Credentials ===");
+        printHeader("Please Enter Credentials");
         String userId = readLine("User ID (e.g., REQ-001): ", false);
         String userPassword = readLine("Password: ", false);
 
@@ -51,11 +53,11 @@ public class LoginMenu extends BaseMenu {
 
         User foundUser = repository.findUserById(userId);
         if (foundUser == null || !foundUser.checkPassword(userPassword)) {
-            System.out.println("Login Failed: Invalid User ID or Password.");
+            printError("Login Failed: Invalid User ID or Password.");
             return;
         }
 
-        System.out.println("Login Successful! Welcome, " + foundUser.getFullName() + " (" + foundUser.getRole() + ")");
+        printSuccess("Login Successful! Welcome, " + foundUser.getFullName() + " (" + foundUser.getRole() + ")");
         authenticatedUser = foundUser;
         stop();
 
@@ -63,6 +65,10 @@ public class LoginMenu extends BaseMenu {
 
     public User getAuthenticatedUser() {
         return authenticatedUser;
+    }
+
+    @Override
+    protected void displayTickets(ArrayList<Ticket> tickets) {
     }
 
 }

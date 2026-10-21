@@ -1,6 +1,12 @@
 package presentationlayer;
 import datalayer.Repository;
+import entitylayer.Comment;
+import entitylayer.Ticket;
+import entitylayer.TicketLogEntry;
 import entitylayer.User;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public abstract class BaseMenu {
@@ -9,8 +15,11 @@ public abstract class BaseMenu {
     protected Scanner input;
     protected boolean running;
     protected Repository repository;
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final int WIDTH = 60;
 
     public static String LINE = "======================================";
+    
 
     protected BaseMenu(User user, Scanner input, Repository repository) {
         this.input = input;
@@ -31,6 +40,61 @@ public abstract class BaseMenu {
 
     public void stop() {
         this.running = false;
+    }
+
+    protected void displayTicket(Ticket t) {
+        String agentName = (t.getAssignedAgent() != null) ? t.getAssignedAgent().getFullName() : "Unassigned";
+        String requestorName = (t.getSubmittedBy() != null) ? t.getSubmittedBy().getFullName() + " (" + t.getSubmittedBy().getRole() + ")" : "Unknown";
+
+        printHeader(" TICKET " + t.getTicketId());
+        System.out.printf("%-13s : %s%n", "Category", t.getCategory());
+        System.out.printf("%-13s : %s%n", "Subject", t.getSubject());
+        System.out.printf("%-13s : %s%n", "Priority", t.getPriority());
+        System.out.printf("%-13s : %s%n", "State", t.getState());
+        System.out.printf("%-13s : %s%n", "Requestor", requestorName);
+        System.out.printf("%-13s : %s%n", "Agent", agentName);
+        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmittedFormatted());
+        System.out.printf("%-13s : %s%n", "Description", t.getDescription());
+        System.out.println();
+    
+        printField("Comments", String.valueOf(t.getComments().size()));
+        for (Comment c : t.getComments()) {
+            System.out.printf("[%s] %-30s | %s%n", formatDate(c.getTimestamp()), c.getAuthorName(), c.getMessage());
+        }
+        System.out.println();
+
+        printField("History", String.valueOf(t.getTicketLogEntries().size()));
+        for (TicketLogEntry log : t.getTicketLogEntries()) {
+            System.out.printf("[%s] %-30s | %s%n", formatDate(log.getTimestamp()), (log.getPreviousState() + " -> " + log.getNewState()),  log.getReason() );
+        }
+        System.out.println();
+        printDivider();
+    }
+
+    protected void displayTickets(ArrayList<Ticket> tickets) {
+       if (tickets.isEmpty()) {
+            printError("No tickets found.");
+            return;
+        }
+
+        System.out.printf("%-10s | %-15s | %-15s | %-15s | %-20s | %-10s | %-12s | %s%n", "ID", "Requestor", "Agent", "Category", "Subject", "Priority", "State", "Description");
+        System.out.println("-".repeat(148));
+
+        for (Ticket t : tickets) {
+            String requestorName = (t.getSubmittedBy() != null) ? t.getSubmittedBy().getFullName() : "Unknown";
+            String agentName = (t.getAssignedAgent() != null) ? t.getAssignedAgent().getFullName() : "Unassigned";
+            System.out.printf("%-10s | %-15s | %-15s | %-15s | %-20s | %-10s | %-12s | %s%n",
+                truncate(t.getTicketId(), 10),
+                truncate(requestorName, 15),
+                truncate(agentName, 15),
+                truncate(t.getCategory(), 15),
+                truncate(t.getSubject(), 20),
+                truncate(t.getPriority(), 10),
+                truncate(t.getState(), 12),
+                truncate(t.getDescription(), 30)
+            );
+        }
+        System.out.println();
     }
 
     protected int readInt(String prompt, int min, int max) {
@@ -104,7 +168,7 @@ public abstract class BaseMenu {
             System.out.println("[3] HIGH");
             System.out.println("[4] URGENT");
             System.out.println("");
-            int choice = readInt("choice: ", 1, 4);
+            int choice = readInt("Enter Priority: ", 1, 4);
             switch (choice) {
                 case 1 -> { return "LOW"; }
                 case 2 -> { return "MEDIUM"; }
@@ -123,7 +187,7 @@ public abstract class BaseMenu {
             System.out.println("[4] HARDWARE");
             System.out.println("[5] ACCOUNT SECURITY"); 
             System.out.println();
-            int choice = readInt("choice: ", 1, 5);
+            int choice = readInt("Enter Category: ", 1, 5);
             switch (choice) {
                 case 1 -> { return "FACILITIES_MAINTENANCE"; }
                 case 2 -> { return "SOFTWARE_SYSTEMS"; }
@@ -144,7 +208,7 @@ public abstract class BaseMenu {
                 System.out.println("[4] Carpentry & Keys");
                 System.out.println("[5] Others (specify)");
                 System.out.println();
-                int choice = readInt("choice: ", 1, 5);
+                int choice = readInt("Enter Subject: ", 1, 5);
                 switch (choice) {
                     case 1 -> { return "Plumbing & Leaks"; }
                     case 2 -> { return "HVAC & Temperature"; }
@@ -161,7 +225,7 @@ public abstract class BaseMenu {
                 System.out.println("[4] Grading & Enrollment Tools ");
                 System.out.println("[5] Others (specify)");
                 System.out.println();
-                int choice = readInt("choice: ", 1, 5);
+                int choice = readInt("Enter Subject: ", 1, 5);
                 switch (choice) {
                     case 1 -> { return "LMS / Portal Issue"; }
                     case 2 -> { return "Software Installation"; }
@@ -178,7 +242,7 @@ public abstract class BaseMenu {
                 System.out.println("[4] Slow Internet Speed");
                 System.out.println("[5] Others (specify)");
                 System.out.println();
-                int choice = readInt("choice: ", 1, 5);
+                int choice = readInt("Enter Subject: ", 1, 5);
                 switch (choice) {
                     case 1 -> { return "Campus Wi-Fi Disconnect"; }
                     case 2 -> { return "Ethernet / Wired Port "; }
@@ -195,7 +259,7 @@ public abstract class BaseMenu {
                 System.out.println("[4] Peripherals & Cables");
                 System.out.println("[5] Others (specify)");
                 System.out.println();
-                int choice = readInt("choice: ", 1, 5);
+                int choice = readInt("Enter Subject: ", 1, 5);
                 switch (choice) {
                     case 1 -> { return "Computer / Lab PC Failure"; }
                     case 2 -> { return "Printer & Copier Jam"; }
@@ -212,7 +276,7 @@ public abstract class BaseMenu {
                 System.out.println("[4] Access Permissions");
                 System.out.println("[5] Others (specify)");
                 System.out.println();
-                int choice = readInt("choice: ", 1, 5);
+                int choice = readInt("Enter Subject: ", 1, 5);
                 switch (choice) {
                     case 1 -> { return "Password Reset"; }
                     case 2 -> { return "Multi-Factor Auth (MFA)"; }
@@ -234,7 +298,7 @@ public abstract class BaseMenu {
             System.out.println("[4] CLOSED");
             System.out.println("[5] DELETED");
             System.out.println("");
-            int choice = readInt("choice: ", 1, 5);
+            int choice = readInt("Enter State: ", 1, 5);
             switch (choice) {
                 case 1 -> { return "OPEN"; }
                 case 2 -> { return "IN_PROGRESS"; }
@@ -252,7 +316,7 @@ public abstract class BaseMenu {
             System.out.println("[2] SUPPORTAGENT");
             System.out.println("[3] ADMIN");
             System.out.println("");
-            int choice = readInt("choice: ", 1, 3);
+            int choice = readInt("Enter Role: ", 1, 3);
             switch (choice) {
                 case 1 -> { return "REQUESTOR"; }
                 case 2 -> { return "SUPPORT_AGENT"; }
@@ -261,6 +325,36 @@ public abstract class BaseMenu {
         }
     }
 
+    protected void printLine(char c) {
+        System.out.println(String.valueOf(c).repeat(WIDTH));
+    }
+
+    protected void printHeader(String title) {
+        System.out.println();
+        printLine('=');
+        System.out.println(" " + title.toUpperCase());
+        printLine('=');
+    }
+
+    protected void printDivider() {
+        printLine('-');
+    }
+
+    protected void printSuccess(String message) {
+        System.out.println("[OK] " + message);
+    }
+ 
+    protected void printError(String message) {
+        System.out.println("[!] Error: " + message);
+    }
+
+    protected void printField(String label, String value) {
+        System.out.printf("%-14s: %s%n", label, value);
+    }
+
+    protected String formatDate(LocalDateTime dateTime) {
+        return dateTime.format(DATE_FORMAT);
+    }
     protected abstract void displayMenu();
     protected abstract void executeChoice(int choice);
     protected abstract int getMinChoice();

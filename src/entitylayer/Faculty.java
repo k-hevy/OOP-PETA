@@ -9,8 +9,7 @@ public class Faculty extends Requestor {
     private String position;
     private String deskExtension;
 
-    public Faculty(String userId, String firstName, String lastName, String email, String password, Repository repository,
-                    String employeeId, String department, String position, String deskExtension) {
+    public Faculty(String userId, String firstName, String lastName, String email, String password, Repository repository, String employeeId, String department, String position, String deskExtension) {
         super(userId, firstName, lastName, email, password, repository);
         this.employeeId = employeeId;
         this.department = department;

@@ -11,15 +11,10 @@ public class Admin extends User {
     private String deskExtension;
 
     public Admin(String userId, String firstName, String lastName, String email, String password, Repository repository, String employeeId, String managedDepartment, String deskExtension) {
-        super(userId, firstName, lastName, email, password, repository);
+        super("ADMIN", userId, firstName, lastName, email, password, repository);
         this.employeeId = employeeId;
         this.managedDepartment = managedDepartment;
         this.deskExtension = deskExtension;
-    }
-
-    @Override
-    public String getRole() {
-       return "ADMIN";
     }
 
     @Override
@@ -31,6 +26,11 @@ public class Admin extends User {
         return ticket;
     } // Gets ALL tickets in the system even deleted ones
 
+    @Override
+    public ArrayList<Ticket> getTickets() {
+        return getRepository().getAllTickets();
+    } // gets all tickets
+
     public User getUser(String userId) {
         User user = getRepository().findUserById(userId);
         if (user == null) {
@@ -38,6 +38,10 @@ public class Admin extends User {
         } // Only throw an error if the user doesnt exists
         return user;
     } // Gets ALL users in the sysetm
+
+    public ArrayList<User> getAllUsers() {
+        return getRepository().getAllUsers();
+    } // gets all users
     
     // Getters
     public String getEmployeeId() { return employeeId; }
@@ -57,25 +61,12 @@ public class Admin extends User {
 
     public void deleteTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId);
-        ticket.deletTicket(this, reason);
+        ticket.deleteTicket(this, reason);
     } // Deletes any tickets that isnt already deleted
-
-    public ArrayList<Ticket> getAllTickets() {
-        ArrayList<Ticket> allTickets = getRepository().getAllTickets();
-        if (allTickets == null) { return new ArrayList<>(); }
-        return allTickets;
-    } // gets all tickets
-
-    public ArrayList<User> getAllUsers() {
-        ArrayList<User> allUsers = getRepository().getAllUsers();
-        if (allUsers == null) { return new ArrayList<>(); }
-        return allUsers;
-    } // gets all users
 
     public ArrayList<Ticket> filterTickets(String field, String value) {
         ArrayList<Ticket> result = new ArrayList<>();
-        
-        ArrayList<Ticket> allTickets = getAllTickets(); // gets all tickets
+        ArrayList<Ticket> allTickets = getTickets(); // gets all tickets
         for (Ticket ticket : allTickets) { // EX FIELD = CATEGORY, VALUE = MAINTENANCE
             String actual = switch (field.toUpperCase()) {
                 case "ID"        -> ticket.getTicketId();
@@ -95,10 +86,8 @@ public class Admin extends User {
 
     public ArrayList<User> filterUsers(String field, String value) {
         ArrayList<User> result = new ArrayList<>();
-
-        String searchItem = value.toUpperCase();
-        ArrayList<User> allUsers = getAllUsers();  
-        for (User user : allUsers ) { // EX ROLE = CATEGORY, VALUE = REQUESTOR
+        String searchItem = value.trim().toUpperCase();
+        for (User user : getAllUsers()) { // EX ROLE = CATEGORY, VALUE = REQUESTOR
             if (user == null) { continue; }
             String actual = switch(field.toUpperCase()) {
                 case "ID"             -> user.getUserId();
@@ -116,7 +105,7 @@ public class Admin extends User {
 
     public LinkedHashMap<String, Integer> getSummaryCounts() {
         LinkedHashMap<String, Integer> counts = new LinkedHashMap<>(); // A linked Hash map is a series of KEY-VALUE pairs EX. TOTAL-TICKETS = KEY.  15 VALUE
-        counts.put("TOTAL_TICKETS", getAllTickets().size()); // TICKET 
+        counts.put("TOTAL_TICKETS", getTickets().size()); // TICKET 
         counts.put("TOTAL_USERS", getAllUsers().size()); //  / USERS
        
         String[] states = {"OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "DELETED"};

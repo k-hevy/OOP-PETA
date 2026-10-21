@@ -5,18 +5,19 @@ import java.util.ArrayList;
 
 public class Ticket {
 
-    private final LocalDateTime dateSubmitted;
     private final String ticketId;
+    private final LocalDateTime dateSubmitted;
     private final Requestor submittedBy;
+    private final String category;
+    private final String subject;
+    private final String description;
     private final ArrayList<Comment> comments;
     private final ArrayList<TicketLogEntry> ticketLogEntries;
     private static int ticketCounter = 0;
     private String state;
     private SupportAgent assignedAgent;
     private String priority;
-    private String category;
-    private String subject;
-    private String description;
+
 
     public Ticket(Requestor submittedBy, SupportAgent assignedAgent, String priority, String category, String subject, String description) {
         this.ticketId = generateTicketId();
@@ -48,10 +49,7 @@ public class Ticket {
     public ArrayList<TicketLogEntry> getTicketLogEntries() {return new ArrayList<>(ticketLogEntries);}
 
     // setters
-    public void setAssignedAgent(SupportAgent agent) {this.assignedAgent = agent;} // Used by auto assign later
-    public void setCategory(String category) {this.category = category; }
-    public void setSubject(String subject) { this.subject = subject; }
-    public void setDescription(String description) {this.description = description;}
+    public void setAssignedAgent(SupportAgent agent) {this.assignedAgent = agent;} // Only used by Requestor's auto-assignOnly used by Requestor's auto-assign
 
     // Ticket actions
 
@@ -60,16 +58,14 @@ public class Ticket {
         comments.add(comment);
     } // Used by requestor / SupportAgent
 
-    public void changeState(String newState, User changedBy, String reason) {
-        checkTransition(newState); // validates if valid state change from Current --> newState. Throws error if yes
-        String oldState = state; // remember oldState
-        state = newState.toUpperCase(); // assign new State
-        log(oldState, state, changedBy, reason); // Creates a tickert log if succesful
+    public void updateTicketState(String newState, User changedBy, String reason) {
+        checkWorkFlowMoves(newState);
+        move(newState, changedBy, reason);
     } // Used by SupportAgent 
 
     public void changePriority(String newPriority, User changedBy, String reason) {
         requireActive(); // A ticket should still be OPEN / IN-PROGRESS to be able to change its priority
-        if (newPriority.equalsIgnoreCase(getPriority())) { 
+        if (newPriority.equalsIgnoreCase(priority)) { 
             throw new IllegalArgumentException("Ticket " + ticketId + " is already " + priority + " priority"); 
         } // Fail if the current priority and newPriority are the same
         String oldPriority = this.priority;
@@ -78,67 +74,37 @@ public class Ticket {
     } // Used by SupportAgent, checks for rules in changing a priority
     
     public void closeTicket(User by, String reason) {
-        changeState("CLOSED", by, reason); // Check this method
+        requireResolved();
+        move("CLOSED", by, reason);
     }  // Used by Requestor
 
     public void reopenTicket(User by, String reason) {
         requireResolved(); // A ticket can only be reopened if its RESOLVED
-        changeState("IN_PROGRESS", by, reason);
+        move("OPEN", by, reason);
     } // Used by Requestor
 
-    public void deletTicket(User by, String reason) {
-        requireNotDeleted(); // You cannot delete a ticket that is already deleted
-        String oldState = state; // Remember Old State
-        log(oldState, state, by, reason);
+    public void deleteTicket(User by, String reason) {
+        requireNotFinished();
+        move("DELETED", by, reason);
     } // Used by Requestor (can only delete OPEN/ INPROGRESS Tickets) and Admin (Admin can delete a ticket from any state except DELETED)
 
     public void reassignTicket(User user, User changedBy, String reason) {
-        requireActive(); // A ticket should still be OPEN / IN-PROGRESS
-        
-        if (user == null) {
-            throw new IllegalArgumentException("This User doesnt exist");
-        } // throw an error if thhe user doesnt exist
-
-        if (!(user instanceof SupportAgent)) { 
-            throw new IllegalArgumentException("User with " + user.getFullName() + " is not an agent.");
-        } // Throw an error if the user isnt a supportAgent
-
-        SupportAgent newAgent = (SupportAgent) user; // downcast User if they are asupportAgent
-        
-        if (assignedAgent != null && assignedAgent.equals(newAgent)) { 
-            throw new IllegalArgumentException("Ticket " + ticketId + " is already assigned to " + newAgent.getFirstName() + "."); 
-        } // Cannot assign to same agent
-
-        if (!newAgent.getSpecialization().equalsIgnoreCase(category)) {
-            throw new IllegalArgumentException("Ticket " + ticketId + " category ("+ getCategory() +") does not match " + newAgent.getFirstName() +" ("+ newAgent.getSpecialization() + ") specialization."); 
-        } // cannot assign to an agent with a different category from the ticket
-
+        checkReassign(user);
+        SupportAgent newAgent = (SupportAgent) user;
         String oldAgentName = (assignedAgent != null) ? getAssignedAgent().getFullName() : "Unassigned"; // if the there is a currently assigned agent get their name else put Unassigned
-
+        assignedAgent = newAgent;
         setAssignedAgent(newAgent); // Set assigned Agent
         log(oldAgentName, newAgent.getFullName(), changedBy, reason); // Create a ticket log if successful
     } // Used by Admin. Reassign a active ticket to a different agent with the same specialization
 
-    // State Helpers
+    // State Helpers - Asks a quetsion of thhe current state of a ticket
 
     public boolean isActive() { return (state.equalsIgnoreCase("OPEN") || state.equalsIgnoreCase("IN_PROGRESS")); } // Returns if a ticket is OPEN OR IN_PROGRESS
     public boolean isResolved() { return (state.equalsIgnoreCase("RESOLVED")); } // returns if a ticket is RESOLVED
-    public boolean isFinished() { return state.equals("CLOSED") || state.equals("DELETED");  } // Returns if a ticket is CLOSED / DELTED. Finished tickets should no longer be edited
-    public boolean isDeleted() { return state.equals("DELETED"); } // Returns if a ticket is Deleted
+    public boolean isFinished() { return state.equalsIgnoreCase("CLOSED") || state.equals("DELETED");  } // Returns if a ticket is CLOSED / DELTED. Finished tickets should no longer be edited
+    public boolean isDeleted() { return state.equalsIgnoreCase("DELETED"); } // Returns if a ticket is Deleted
 
     // Throwers (early throw for UI Experiecne)
-
-    public void checkTransition(String newState) {
-        boolean valid = switch(this.state) {
-            case "OPEN"        -> newState.equalsIgnoreCase("IN_PROGRESS");
-            case "IN_PROGRESS" -> newState.equalsIgnoreCase("OPEN") || newState.equalsIgnoreCase("RESOLVED");
-            case "RESOLVED"    -> newState.equalsIgnoreCase("IN_PROGRESS") || newState.equalsIgnoreCase("CLOSED");
-            default            -> false;
-        }; // Compares the current state and its allowed state change EX. An open ticket is only allowed to change to IN_PROGRESS
-        if (!valid) {
-            throw new IllegalStateException("Ticket " + ticketId + " cannot move from " + state + " to " + newState + ".");
-        }  // Throws an error if it is an invalid state transition
-    } 
 
     public void requireNotFinished() {
         if (isFinished()) {
@@ -163,10 +129,49 @@ public class Ticket {
         throw new IllegalStateException("Ticket " + ticketId + " is already DELETED.");
     } // Throw an error if a Ticketr is Deleted
 
+    public void checkWorkFlowMoves(String newState) {
+        boolean valid = switch(state) {
+            case "OPEN"        -> newState.equalsIgnoreCase("IN_PROGRESS");
+            case "IN_PROGRESS" -> newState.equalsIgnoreCase("OPEN") || newState.equalsIgnoreCase("RESOLVED");
+            case "RESOLVED"    -> newState.equalsIgnoreCase("IN_PROGRESS");
+            default            -> false;
+        }; // Compares the current state and its allowed state change EX. An open ticket is only allowed to change to IN_PROGRESS
+        if (!valid) {
+            throw new IllegalStateException("Ticket " + ticketId + " cannot move from " + state + " to " + newState + ".");
+        } // Throws an error if it is an invalid state transition
+    } // Used by SupportAgent
+
+    public void checkReassign(User user) {
+        requireActive(); // A ticket should still be OPEN / IN-PROGRESS
+        if (user == null) {
+            throw new IllegalArgumentException("This User doesnt exist");
+        } // throw an error if thhe user doesnt exist
+
+        if (!(user instanceof SupportAgent)) { 
+            throw new IllegalArgumentException("User with " + user.getFullName() + " is not an agent.");
+        } // Throw an error if the user isnt a supportAgent
+
+        SupportAgent newAgent = (SupportAgent) user; // downcast User if they are asupportAgent
+        
+        if (assignedAgent != null && assignedAgent.equals(newAgent)) { 
+            throw new IllegalArgumentException("Ticket " + ticketId + " is already assigned to " + newAgent.getFirstName() + "."); 
+        } // Cannot assign to same agent
+
+        if (!newAgent.getSpecialization().equalsIgnoreCase(category)) {
+            throw new IllegalArgumentException("Ticket " + ticketId + " category ("+ getCategory() +") does not match " + newAgent.getFirstName() +" ("+ newAgent.getSpecialization() + ") specialization."); 
+        } // cannot assign to an agent with a different category from the ticket
+    }
+    
     private String generateTicketId() {
         ticketCounter++;
         return String.format("TK-%03d", ticketCounter);
     } // Creates an automatic TicketID when ticket is created 
+
+    private void move(String newState, User by, String reason) {
+        String oldState = state; // remember oldState
+        state = newState.toUpperCase();  // assign new State
+        log(oldState, state, by, reason); // Creates a tickert log if succesful
+    } // the method that actually moves a ticket from a state
 
     private void log(String from, String to, User by, String reason) {
         TicketLogEntry log = new TicketLogEntry(from, to, by.getUserId(), by.getFirstName(), reason.trim());

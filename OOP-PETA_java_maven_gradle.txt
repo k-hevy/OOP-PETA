@@ -1,0 +1,2064 @@
+Project Structure:
+└── src
+    ├── applicationlayer
+    │   └── CampusHelpDeskTicketingSystem.java
+    ├── datalayer
+    │   └── Repository.java
+    ├── entitylayer
+    │   ├── Admin.java
+    │   ├── Comment.java
+    │   ├── Faculty.java
+    │   ├── Requestor.java
+    │   ├── Student.java
+    │   ├── SupportAgent.java
+    │   ├── Ticket.java
+    │   ├── TicketLogEntry.java
+    │   └── User.java
+    └── presentationlayer
+        ├── AdminMenu.java
+        ├── BaseMenu.java
+        ├── LoginMenu.java
+        ├── RequestorMenu.java
+        └── SupportAgentMenu.java
+
+==================================================
+
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/applicationlayer/CampusHelpDeskTicketingSystem.java"
+package applicationlayer;
+
+import datalayer.Repository;
+import entitylayer.Admin;
+import entitylayer.Faculty;
+import entitylayer.Requestor;
+import entitylayer.Student;
+import entitylayer.SupportAgent;
+import entitylayer.Ticket;
+import entitylayer.User;
+import java.util.Scanner;
+import presentationlayer.AdminMenu;
+import presentationlayer.BaseMenu;
+import presentationlayer.LoginMenu;
+import presentationlayer.RequestorMenu;
+import presentationlayer.SupportAgentMenu;
+
+public class CampusHelpDeskTicketingSystem {
+
+    private static Repository repository;
+    private static Scanner input;
+    
+    public static void main(String[] args) {
+        repository = new Repository();
+        input = new Scanner(System.in);
+        seedData(repository);
+        run();
+        input.close();
+    } // Initialize Repository and Scanner
+
+    public static void run() {
+        while(true) {
+            LoginMenu loginMenu = new LoginMenu(input, repository);
+            loginMenu.run();
+            User user = loginMenu.getAuthenticatedUser();
+            if (user == null ) { break; }
+            try {
+                launchMenu(user).run();
+            } catch (IllegalStateException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+            System.out.println("You have been logged Out");
+        }
+    } // Main Loop of whole System
+
+    public static BaseMenu launchMenu(User user) {
+        
+        if (user == null) throw new IllegalArgumentException("User cannot be null");
+        if (user instanceof Admin admin)         return new AdminMenu(admin, input, repository);
+        if (user instanceof SupportAgent agent)  return new SupportAgentMenu(agent, input, repository);
+        if (user instanceof Requestor requestor) return new RequestorMenu(requestor, input, repository);
+        throw new IllegalStateException("No menu for " + user.getRole());
+
+    }
+
+    public static void seedData(Repository repo) {
+
+        if (repo == null) { return; }
+
+        SupportAgent agent1 = new SupportAgent("AGT-001", "Bob", "Builder", "bob@univ.edu", "pass123", repo, "EMP-201", "FACILITIES_MAINTENANCE", "ext201");
+        SupportAgent agent2 = new SupportAgent("AGT-002", "Charlie", "Coder", "charlie@univ.edu", "pass123", repo, "EMP-202", "SOFTWARE_SYSTEMS", "ext202");
+        SupportAgent agent3 = new SupportAgent("AGT-003", "Dave", "Debug", "dave@univ.edu", "pass123", repo, "EMP-203", "SOFTWARE_SYSTEMS", "ext203");
+        SupportAgent agent4 = new SupportAgent("AGT-004", "Nina", "Network", "nina@univ.edu", "pass123", repo, "EMP-204", "NETWORK", "ext204");
+        SupportAgent agent5 = new SupportAgent("AGT-005", "Hank", "Hardware", "hank@univ.edu", "pass123", repo, "EMP-205", "HARDWARE", "ext205");
+        SupportAgent agent6 = new SupportAgent("AGT-006", "Sam", "Secure", "sam@univ.edu", "pass123", repo, "EMP-206", "ACCOUNT_SECURITY", "ext206");
+
+        Student student1 = new Student("REQ-001", "David", "Santos", "david@univ.edu", "pass123", repo, "S-001", "BSCS", 3, "3A");
+        Student student2 = new Student("REQ-002", "Maria", "Reyes", "maria@univ.edu", "pass123", repo, "S-002", "BSIT", 2, "2B");
+        Student student3 = new Student("REQ-003", "Paolo", "Cruz", "paolo@univ.edu", "pass123", repo, "S-003", "BSCS", 4, "4A");
+        Faculty faculty1 = new Faculty("REQ-004", "Eve", "Lopez", "eve@univ.edu", "pass123", repo, "F-001", "CS Dept", "Professor", "ext301");
+        Faculty faculty2 = new Faculty("REQ-005", "Frank", "Tan", "frank@univ.edu", "pass123", repo, "F-002", "IT Dept", "Instructor", "ext302");
+
+        Admin admin = new Admin("ADM-001", "Alice", "Admin", "alice@univ.edu", "pass123", repo, "EMP-100", "IT", "ext111");
+
+        repo.addUser(admin);
+        repo.addUser(agent1);
+        repo.addUser(agent2);
+        repo.addUser(agent3);
+        repo.addUser(agent4);
+        repo.addUser(agent5);
+        repo.addUser(agent6);
+        repo.addUser(student1);
+        repo.addUser(student2);
+        repo.addUser(student3);
+        repo.addUser(faculty1);
+        repo.addUser(faculty2);
+
+
+        // T1: full lifecycle with a reopen -> CLOSED (FACILITIES -> Bob)
+        Ticket t1 = student1.createTicket("HIGH", "FACILITIES_MAINTENANCE", "HVAC & Temperature", "Aircon is leaking in Room 402");
+        student1.submitTicket(t1);
+        agent1.updatePriority(t1.getTicketId(), "URGENT", "Water is reaching the outlets");
+        agent1.updateTicketState(t1.getTicketId(), "IN_PROGRESS", "Inspecting the aircon unit");
+        agent1.updateTicketState(t1.getTicketId(), "RESOLVED", "Replaced filter and sealed leak");
+        student1.reopenTicket(t1.getTicketId(), "Still leaking a bit");
+        
+
+        // T2: OPEN with comments from both sides (FACILITIES -> Bob)
+        Ticket t2 = faculty1.createTicket("MEDIUM", "FACILITIES_MAINTENANCE", "Carpentry & Keys", "Door handle broken in faculty room");
+        faculty1.submitTicket(t2);
+        faculty1.addComment(t2.getTicketId(), "Please check soon.");
+        agent1.addComment(t2.getTicketId(), "Will check tomorrow morning.");
+
+        // T3: IN_PROGRESS, reassigned by admin to the other software agent
+        Ticket t3 = student2.createTicket("LOW", "SOFTWARE_SYSTEMS", "LMS / Portal Issue", "Portal login error");
+        student2.submitTicket(t3);
+        admin.reassignTicket(t3.getTicketId(), "AGT-003", "Load balancing task");
+        SupportAgent t3Agent = (SupportAgent) repo.findUserById("AGT-003");
+        t3Agent.updateTicketState(t3.getTicketId(), "IN_PROGRESS", "Reproducing the login error");
+
+        // T4: DELETED by admin (NETWORK -> Nina)
+        Ticket t4 = faculty2.createTicket("URGENT", "NETWORK", "Campus Wi-Fi Disconnect", "Wi-Fi down in hall");
+        faculty2.submitTicket(t4);
+        admin.deleteTicket(t4.getTicketId(), "Duplicate ticket request");
+
+        // T5: DELETED by requestor
+        Ticket t5 = student3.createTicket("LOW", "HARDWARE", "Printer & Copier Jam", "Printer jam in Lab 2");
+        student3.submitTicket(t5);
+        student3.deleteTicket(t5.getTicketId(), "Jam cleared by a classmate");
+
+        // T6: RESOLVED, waiting for requestor to close (HARDWARE -> Hank)
+        Ticket t6 = student3.createTicket("HIGH", "HARDWARE", "Classroom AV & Projector", "Projector has no signal in Room 210");
+        student3.submitTicket(t6);
+        agent5.updateTicketState(t6.getTicketId(), "IN_PROGRESS", "Checking HDMI cable");
+        agent5.updateTicketState(t6.getTicketId(), "RESOLVED", "Replaced HDMI cable");
+
+        // T7: ACCOUNT_SECURITY ticket, auto-assigned to Sam
+        Ticket t7 = student2.createTicket("URGENT", "ACCOUNT_SECURITY", "Phishing & Scams", "Received a suspicious email asking for my password");
+        student2.submitTicket(t7);
+
+        // T8: second software ticket, auto-assigned by workload
+        Ticket t8 = faculty2.createTicket("MEDIUM", "SOFTWARE_SYSTEMS", "Software Installation", "Need MATLAB installed on office PC");
+        faculty2.submitTicket(t8);
+        faculty2.addComment(t8.getTicketId(), "Same problem on the lab PCs.");
+
+        // T9: NETWORK in progress
+        Ticket t9 = student1.createTicket("HIGH", "NETWORK", "VPN Connection", "VPN keeps dropping at home");
+        student1.submitTicket(t9);
+        agent4.updateTicketState(t9.getTicketId(), "IN_PROGRESS", "Checking VPN logs");
+        agent4.addComment(t9.getTicketId(), "Please send the exact error message.");
+        
+    }
+
+}
+
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/applicationlayer/CampusHelpDeskTicketingSystem.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/datalayer/Repository.java"
+package datalayer;
+
+import entitylayer.Ticket;
+import entitylayer.User;
+import java.util.ArrayList;
+
+public class Repository {
+
+    private final ArrayList<User> users;
+    private final ArrayList<Ticket> tickets;
+    
+
+    public Repository() {
+        users = new ArrayList<>();
+        tickets = new ArrayList<>();
+    }
+
+    public void addUser(User user) {
+        users.add(user);
+    }
+
+    public User findUserById(String targetId) {
+        for (User user : users) {
+            if (user.getUserId().equalsIgnoreCase(targetId)) {
+                return user;
+            }
+        }
+        return null; // no user with this id exists
+    }
+
+    public ArrayList<User> getAllUsers() {
+        return new ArrayList<>(users);
+    } 
+
+    public void addTicket(Ticket ticket) {
+        tickets.add(ticket);
+    }
+
+    public Ticket findTicketById(String targetId) {
+         for (Ticket ticket : tickets) {
+            if (ticket.getTicketId().equalsIgnoreCase(targetId)) {
+                return ticket;
+            }
+        }
+        return null; // no ticket with this id exists
+    }
+
+    public ArrayList<Ticket> getAllTickets() {
+        return new ArrayList<>(tickets);
+    }
+
+}
+
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/datalayer/Repository.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/entitylayer/Admin.java"
+package entitylayer;
+
+import datalayer.Repository;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
+public class Admin extends User {
+
+    private String employeeId;
+    private String managedDepartment;
+    private String deskExtension;
+
+    public Admin(String userId, String firstName, String lastName, String email, String password, Repository repository, String employeeId, String managedDepartment, String deskExtension) {
+        super("ADMIN", userId, firstName, lastName, email, password, repository);
+        this.employeeId = employeeId;
+        this.managedDepartment = managedDepartment;
+        this.deskExtension = deskExtension;
+    }
+
+    @Override
+    public Ticket getTicket(String ticketId) {
+        Ticket ticket =getRepository().findTicketById(ticketId);
+        if (ticket == null) {
+            throw new IllegalArgumentException("Ticket " + ticketId + " was not found.");
+        } // only throw an error if the ticket doesnt exists
+        return ticket;
+    } // Gets ALL tickets in the system even deleted ones
+
+    @Override
+    public ArrayList<Ticket> getTickets() {
+        ArrayList<Ticket> allTickets = getRepository().getAllTickets();
+        if (allTickets == null) { return new ArrayList<>(); }
+        return allTickets;
+    } // gets all tickets
+
+    public User getUser(String userId) {
+        User user = getRepository().findUserById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("User " + userId + " was not found.");
+        } // Only throw an error if the user doesnt exists
+        return user;
+    } // Gets ALL users in the sysetm
+    
+    // Getters
+    public String getEmployeeId() { return employeeId; }
+    public String getManagedDepartment() { return managedDepartment; }
+    public String getDeskExtension() { return deskExtension;  }
+
+    // Setters
+    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+    public void setManagedDepartment(String managedDepartment) { this.managedDepartment = managedDepartment; }
+    public void setDeskExtension(String deskExtension) { this.deskExtension = deskExtension; }
+
+    public void reassignTicket(String ticketId, String agentId, String reason) {
+        Ticket ticket = getTicket(ticketId);
+        User user = getRepository().findUserById(agentId);
+        ticket.reassignTicket(user, this, reason);
+    } // Reassigns a ticket check method for business rules
+
+    public void deleteTicket(String ticketId, String reason) {
+        Ticket ticket = getTicket(ticketId);
+        ticket.deleteTicket(this, reason);
+    } // Deletes any tickets that isnt already deleted
+
+    public ArrayList<User> getAllUsers() {
+        ArrayList<User> allUsers = getRepository().getAllUsers();
+        if (allUsers == null) { return new ArrayList<>(); }
+        return allUsers;
+    } // gets all users
+
+    public ArrayList<Ticket> filterTickets(String field, String value) {
+        ArrayList<Ticket> result = new ArrayList<>();
+        
+        ArrayList<Ticket> allTickets = getTickets(); // gets all tickets
+        for (Ticket ticket : allTickets) { // EX FIELD = CATEGORY, VALUE = MAINTENANCE
+            String actual = switch (field.toUpperCase()) {
+                case "ID"        -> ticket.getTicketId();
+                case "STATE"     -> ticket.getState();
+                case "CATEGORY"  -> ticket.getCategory();
+                case "PRIORITY"  -> ticket.getPriority();
+                case "USER"      -> ticket.getSubmittedBy().getUserId();
+                case "AGENT"     -> ticket.getAssignedAgent() == null ? "UNASSIGNED" : ticket.getAssignedAgent().getUserId() ; 
+                default          -> null;
+            }; // compare the value to the ticket based on the given field
+            if (actual != null && actual.equalsIgnoreCase(value.trim())) {
+                result.add(ticket); // if yes add them
+            }
+        }
+        return result;
+    } // Returns filtered Ticket list based on the field and valuee
+
+    public ArrayList<User> filterUsers(String field, String value) {
+        ArrayList<User> result = new ArrayList<>();
+
+        String searchItem = value.toUpperCase();
+        ArrayList<User> allUsers = getAllUsers();  
+        for (User user : allUsers ) { // EX ROLE = CATEGORY, VALUE = REQUESTOR
+            if (user == null) { continue; }
+            String actual = switch(field.toUpperCase()) {
+                case "ID"             -> user.getUserId();
+                case "ROLE"           -> user.getRole();
+                case "NAME"           -> user.getFullName();
+                case "SPECIALIZATION" -> user instanceof SupportAgent supportAgent ? supportAgent.getSpecialization() : null;
+                default               -> null;
+            }; // compare the value to the ticket based on the given field
+            if (actual  != null && actual.toUpperCase().contains(searchItem)) {
+                result.add(user); // if yes add them
+            }
+        }
+        return result;
+    } // Returns filtered User list based on the field and value
+
+    public LinkedHashMap<String, Integer> getSummaryCounts() {
+        LinkedHashMap<String, Integer> counts = new LinkedHashMap<>(); // A linked Hash map is a series of KEY-VALUE pairs EX. TOTAL-TICKETS = KEY.  15 VALUE
+        counts.put("TOTAL_TICKETS", getTickets().size()); // TICKET 
+        counts.put("TOTAL_USERS", getAllUsers().size()); //  / USERS
+       
+        String[] states = {"OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "DELETED"};
+        for (String state : states) { counts.put(state, filterTickets("STATE", state).size()); } // States
+        String[] priorities = {"LOW", "MEDIUM", "HIGH", "URGENT"};
+        for (String priority : priorities ) { counts.put(priority, filterTickets("PRIORITY", priority).size()); } // PRIORITY
+        String[] categories = {"FACILITIES_MAINTENANCE", "SOFTWARE_SYSTEMS", "NETWORK", "HARDWARE", "ACCOUNT_SECURITY"};
+        for (String category : categories) { counts.put(category, filterTickets("CATEGORY", category).size()); } // CATEGORY
+
+        counts.put("UNASSIGNED_TICKETS", filterTickets("AGENT", "UNASSIGNED").size()); // Others
+        return counts;
+    } // this method uses the Filter Users and Filter Ticket method inputting a FIELD andf VALUE and getting the SIZE() of the lists
+
+}
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/Admin.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/entitylayer/Comment.java"
+package entitylayer;
+
+import java.time.LocalDateTime;
+
+public class Comment {
+
+    private final String commentId;
+    private final User user;
+    private final String message;
+    private final LocalDateTime timestamp;
+    private static int commentCounter = 0;
+
+    public Comment(User user, String message) {
+        this.commentId = generateCommentId();
+        this.user = user;
+        this.message = message;
+        this.timestamp = LocalDateTime.now();
+    }
+
+    public String getCommentId() {return commentId; } 
+    public User getAuthor() {return user;}
+    public String getAuthorName() { return user.getFullName(); }
+    public String getMessage() {return message;}
+    public LocalDateTime getTimestamp() { return timestamp;}
+    public String getTime() { return getTimestamp().format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm")); }
+
+    private String generateCommentId() {
+        commentCounter++;
+        return String.format("CM-%03d", commentCounter);
+    } // called whenever a new comment is created
+
+}
+
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/Comment.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/entitylayer/Faculty.java"
+package entitylayer;
+
+import datalayer.Repository;
+
+public class Faculty extends Requestor {
+
+    private String employeeId;
+    private String department;
+    private String position;
+    private String deskExtension;
+
+    public Faculty(String userId, String firstName, String lastName, String email, String password, Repository repository, String employeeId, String department, String position, String deskExtension) {
+        super(userId, firstName, lastName, email, password, repository);
+        this.employeeId = employeeId;
+        this.department = department;
+        this.position = position;
+        this.deskExtension = deskExtension;
+    }
+
+    //Getters
+    public String getEmployeeId() {return employeeId;}
+    public String getDepartment() {return department;}
+    public String getPosition() {return position;}
+    public String getDeskExtension() {return deskExtension;}
+
+     // Setetrs
+    public void setEmployeeId(String employeeId) { this.employeeId = employeeId;}
+    public void setDepartment(String department) {this.department = department;}
+    public void setPosition(String position) {this.position = position;}
+    public void setDeskExtension(String deskExtension)  {this.deskExtension = deskExtension;}
+
+}
+
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/Faculty.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/entitylayer/Requestor.java"
+package entitylayer;
+
+import datalayer.Repository;
+import java.util.ArrayList;
+
+public class Requestor extends User {
+
+    public Requestor(String userId, String firstName, String lastName, String email, String password, Repository repository) {
+        super("REQUESTOR",userId, firstName, lastName, email, password, repository);
+    }
+
+    @Override
+    public Ticket getTicket(String ticketId) {
+        Ticket ticket = getRepository().findTicketById(ticketId);
+        if (ticket == null || ticket.getState().equalsIgnoreCase("DELETED")) { 
+            throw new IllegalArgumentException("Ticket " + ticketId +" was not found."); 
+        } // Throw an error if you try to acces a ticket that doesnt exist
+        if (ticket.getSubmittedBy() == null || !ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId())) { 
+            throw new SecurityException("You can only view your own tickets."); 
+        } // Throw an Error if you try to access a ticket that isnt your
+        return ticket;  
+    } // throws an exception if invalid Ticket ID / if you do not own ticket
+
+    @Override
+    public ArrayList<Ticket> getTickets() {
+       ArrayList<Ticket> myTickets = new ArrayList<>();
+        ArrayList<Ticket> allTickets = getRepository().getAllTickets();
+        if (allTickets == null ) { return myTickets; }
+        for (Ticket ticket : allTickets) {
+                if (ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId()) && !ticket.isDeleted()) {
+                    myTickets.add(ticket);
+                }
+            }
+        return myTickets;
+    } // Returns all tickets submitted by the requestor except Deleted ones
+
+    public Ticket createTicket(String priority, String category, String subject, String description) {
+        return new Ticket(this, null, priority, category, subject, description);
+    } // Create a ticket 
+
+    public Comment createComment(String message){
+        return new Comment(this, message);
+    } // Create A comment
+    
+    public void submitTicket(Ticket ticket) {
+        autoAssignAgent(ticket); // tickets stays unassigned if no agent matches
+        getRepository().addTicket(ticket);
+     } // after creating a ticket auto assign to agent and store in the repo
+     
+    public void deleteTicket(String ticketId, String reason) {
+        Ticket ticket = getTicket(ticketId); // throws an error if not found
+        ticket.requireActive(); // The ticket should be OPEN / IN_PROGRESS
+        ticket.deleteTicket(this, reason); 
+     } // Deletes a ticket if it is OPEN - IN-PROGRESS
+     
+    public void reopenTicket(String ticketId, String reason) {
+        Ticket ticket = getTicket(ticketId); // throws an error if not found
+        ticket.reopenTicket(this, reason);
+    } // Reopens a ticket only if its RESOLVED
+     
+    public void addComment(String ticketId, String message) {
+        Ticket ticket = getTicket(ticketId);
+        ticket.addComment(createComment(message));
+    }
+
+    public void closeTicket(String ticketId, String reason) {
+        Ticket ticket = getTicket(ticketId); // throws an error if not found
+        ticket.closeTicket(this, reason);
+    } // Close aticket that is resolved
+    
+    public ArrayList<Ticket> getActiveTickets() {
+        ArrayList<Ticket> myTickets = new ArrayList<>();
+        for (Ticket ticket : getTickets()) {
+            if (ticket.isActive()) {
+                myTickets.add(ticket);
+            }
+        }
+        return myTickets;
+     } // Returns all tickets submitted by the requestor that are OPEN / INPROGRESS except Deleted ones
+
+    private void autoAssignAgent(Ticket ticket) {
+
+        ArrayList<User> users = getRepository().getAllUsers();
+
+        SupportAgent bestAgent = null;
+        int fewestActiveTickets = Integer.MAX_VALUE;
+
+        for (User user : users) {
+            if (!(user instanceof SupportAgent agent)) { continue; } // User must be a supportAgent
+            if (agent.getSpecialization() == null ) { continue; } // SupportAgent must have a specialization
+            if (!agent.getSpecialization().equalsIgnoreCase(ticket.getCategory())) { continue; } // SupportAgent specializaiton must be thhe same as ticket category
+            
+            int activeCount = agent.getActiveTickets().size();
+            if (activeCount < fewestActiveTickets) {
+                fewestActiveTickets = activeCount;
+                bestAgent = agent;
+            } // Pick the agent with fewest active tickets that specialization matchhes the category of the ticket 
+        }
+
+        if (bestAgent != null) { 
+            ticket.setAssignedAgent(bestAgent);
+        } // if there is a best agent assign the ticket
+
+        // do nothing if there isnt an agent available
+
+    } // Picks the best agent for the job
+
+}
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/Requestor.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/entitylayer/Student.java"
+package entitylayer;
+
+import datalayer.Repository;
+
+public class Student extends Requestor {
+    
+private String studentId;
+private String program;
+private int yearLevel;
+private String section;
+
+public Student(String userId, String firstName, String lastName, String email, String password, Repository repository, String studentId, String program, int yearLevel, String section) {
+        super(userId, firstName, lastName, email, password, repository);
+        this.studentId = studentId;
+        this.program = program;
+        this.yearLevel = yearLevel;
+        this.section = section;
+    }
+
+    // getters
+    public String getStudentId() { return studentId; }
+    public String getProgram() { return program; }
+    public int getYearLevel() { return yearLevel; }
+    public String getSection() { return section;}
+    
+    // Setters
+    public void setStudentId(String studentId) {this.studentId = studentId;}
+    public void setProgram(String program) {this.program = program;}
+    public void setYearLevel(int yearLevel) {this.yearLevel = yearLevel;}
+    public void setSection(String section) {this.section = section;} 
+
+}
+
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/Student.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/entitylayer/SupportAgent.java"
+package entitylayer;
+
+import datalayer.Repository;
+import java.util.ArrayList;
+
+public class SupportAgent extends User {
+
+    private String employeeId;
+    private String specialization;
+    private String deskExtension;
+
+    public SupportAgent(String userId, String firstName, String lastName, String email, String password, Repository repository, String employeeId, String specialization, String deskExtension) {
+        super("SUPPORT_AGENT", userId, firstName, lastName, email, password, repository);
+        this.employeeId = employeeId;
+        this.specialization = specialization;
+        this.deskExtension = deskExtension;
+    }
+
+    // Getters
+    public String getEmployeeId() { return employeeId; }
+    public String getSpecialization() { return specialization; }
+    public String getDeskExtension() { return deskExtension; }
+
+    // Setters
+    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
+    public void setSpecialization(String specialization) { this.specialization = specialization; }
+    public void setDeskExtension(String deskExtension) { this.deskExtension = deskExtension; }
+
+    @Override
+    public Ticket getTicket(String ticketId) {
+        Ticket ticket = getRepository().findTicketById(ticketId);
+        if (ticket == null || ticket.getState().equalsIgnoreCase("DELETED")) {
+            throw new IllegalArgumentException("Ticket " + ticketId + " was not found.");
+        } // Throw an error if the ticket doesnt exist
+        if (ticket.getAssignedAgent() == null || !ticket.getAssignedAgent().getUserId().equalsIgnoreCase(getUserId()) ) { 
+           throw new SecurityException("You can only view tickets assigned to you.");
+        } // Throw an error if the tickett isnt assigend to you
+        return ticket; 
+    } // Gets an existing Ticket that is assigned to you
+
+    @Override
+    public ArrayList<Ticket> getTickets() {
+        ArrayList<Ticket> assignedTickets = new ArrayList<>();
+        ArrayList<Ticket> allTickets = getRepository().getAllTickets();
+        if (allTickets == null) { return assignedTickets; }
+
+        for (Ticket ticket : allTickets) {
+            if (ticket.getAssignedAgent() != null && ticket.getAssignedAgent().getUserId().equalsIgnoreCase(getUserId()) && !ticket.isDeleted()) {
+                assignedTickets.add(ticket);
+            } // Get all tickets that assignedAgent ID matches mine that are also not deleted
+        }
+        return assignedTickets;
+    } // Gets all assigned tickets that arent deleted
+
+    public Comment createComment(String message){
+        return new Comment(this, message);
+    } // create a new Comment
+
+    public void addComment(String ticketId, String message) {
+        Ticket ticket = getTicket(ticketId);
+        ticket.addComment(createComment(message));
+    } // add a comment to a ticket
+
+    public void updateTicketState(String ticketId, String newState, String reason) {
+        if (newState.equalsIgnoreCase("DELETED") || newState.equalsIgnoreCase("CLOSED")) {
+            throw new SecurityException("Support agents cannot move a ticket to " + newState + ".");
+        }
+        Ticket ticket = getTicket(ticketId);
+        ticket.changeState(newState, this, reason);
+    } // Updates a ticket state Form picking From OPEN / IN PROGRESS / RESOLVED
+
+    public void updatePriority(String ticketId, String newPriority, String reason) {
+        Ticket ticket = getTicket(ticketId);
+        ticket.changePriority(newPriority, this, reason);
+    } // Updates aticket priority by picking from the 4. doesnt allow to assign the same priority
+
+    public ArrayList<Ticket> getActiveTickets() {
+        ArrayList<Ticket> myTickets = new ArrayList<>();
+          for (Ticket ticket : getTickets()) { // get All my assigned tickets
+            if (ticket.isActive()) { // chekc if they are OPEN / IN_PROGRESS
+                    myTickets.add(ticket); // if yes add them in this list
+            }
+          } 
+          return myTickets;
+    } // Returns a list of all OPEN / IN-PROGRESS agent tickets that are the Agent's
+
+}
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/SupportAgent.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/entitylayer/Ticket.java"
+package entitylayer;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+
+public class Ticket {
+
+    private final LocalDateTime dateSubmitted;
+    private final String ticketId;
+    private final Requestor submittedBy;
+    private final ArrayList<Comment> comments;
+    private final ArrayList<TicketLogEntry> ticketLogEntries;
+    private static int ticketCounter = 0;
+    private String state;
+    private SupportAgent assignedAgent;
+    private String priority;
+    private String category;
+    private String subject;
+    private String description;
+
+    public Ticket(Requestor submittedBy, SupportAgent assignedAgent, String priority, String category, String subject, String description) {
+        this.ticketId = generateTicketId();
+        this.submittedBy = submittedBy;
+        this.assignedAgent = assignedAgent;
+        this.priority = priority;
+        this.category = category;
+        this.subject = subject;
+        this.dateSubmitted = LocalDateTime.now();
+        this.state = "OPEN";
+        this.description = description;
+        comments = new ArrayList<>();
+        ticketLogEntries = new ArrayList<>();
+        ticketLogEntries.add(new TicketLogEntry("OPEN", "OPEN", submittedBy.getUserId(), submittedBy.getFirstName(), "Ticket Created"));
+    }
+    
+    // Getters
+    public String getTicketId() { return ticketId; }
+    public Requestor getSubmittedBy() { return submittedBy;}
+    public SupportAgent getAssignedAgent() {return assignedAgent;}
+    public String getPriority() {return priority;}
+    public String getCategory() {return category;}
+    public LocalDateTime getDateSubmitted() { return dateSubmitted; }
+    public String getDateSubmittedFormatted() {return dateSubmitted.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));}
+    public String getState() {return state;}
+    public String getSubject() { return subject; }
+    public String getDescription() {return description;}
+    public ArrayList<Comment> getComments() {return new ArrayList<>(comments);}
+    public ArrayList<TicketLogEntry> getTicketLogEntries() {return new ArrayList<>(ticketLogEntries);}
+
+    // setters
+    public void setAssignedAgent(SupportAgent agent) {this.assignedAgent = agent;} // Used by auto assign later
+    public void setCategory(String category) {this.category = category; }
+    public void setSubject(String subject) { this.subject = subject; }
+    public void setDescription(String description) {this.description = description;}
+
+    // Ticket actions
+
+    public void addComment(Comment comment) {
+        requireNotFinished(); // A ticket should not be CLOSED / DELETED
+        comments.add(comment);
+    } // Used by requestor / SupportAgent
+
+    public void changeState(String newState, User changedBy, String reason) {
+        checkTransition(newState); // validates if valid state change from Current --> newState. Throws error if yes
+        String oldState = state; // remember oldState
+        state = newState.toUpperCase(); // assign new State
+        log(oldState, state, changedBy, reason); // Creates a tickert log if succesful
+    } // Used by SupportAgent 
+
+    public void changePriority(String newPriority, User changedBy, String reason) {
+        requireActive(); // A ticket should still be OPEN / IN-PROGRESS to be able to change its priority
+        if (newPriority.equalsIgnoreCase(getPriority())) { 
+            throw new IllegalArgumentException("Ticket " + ticketId + " is already " + priority + " priority"); 
+        } // Fail if the current priority and newPriority are the same
+        String oldPriority = this.priority;
+        this.priority = newPriority;
+        log(oldPriority, priority, changedBy, reason); // Create a log
+    } // Used by SupportAgent, checks for rules in changing a priority
+    
+    public void closeTicket(User by, String reason) {
+        changeState("CLOSED", by, reason); // Check this method
+    }  // Used by Requestor
+
+    public void reopenTicket(User by, String reason) {
+        requireResolved(); // A ticket can only be reopened if its RESOLVED
+        changeState("OPEN", by, reason);
+    } // Used by Requestor
+
+    public void deleteTicket(User by, String reason) {
+        requireNotFinished();
+        changeState("DELETED", by, reason);
+    } // Used by Requestor (can only delete OPEN/ INPROGRESS Tickets) and Admin (Admin can delete a ticket from any state except DELETED)
+
+    public void reassignTicket(User user, User changedBy, String reason) {
+        requireActive(); // A ticket should still be OPEN / IN-PROGRESS
+        
+        if (user == null) {
+            throw new IllegalArgumentException("This User doesnt exist");
+        } // throw an error if thhe user doesnt exist
+
+        if (!(user instanceof SupportAgent)) { 
+            throw new IllegalArgumentException("User with " + user.getFullName() + " is not an agent.");
+        } // Throw an error if the user isnt a supportAgent
+
+        SupportAgent newAgent = (SupportAgent) user; // downcast User if they are asupportAgent
+        
+        if (assignedAgent != null && assignedAgent.equals(newAgent)) { 
+            throw new IllegalArgumentException("Ticket " + ticketId + " is already assigned to " + newAgent.getFirstName() + "."); 
+        } // Cannot assign to same agent
+
+        if (!newAgent.getSpecialization().equalsIgnoreCase(category)) {
+            throw new IllegalArgumentException("Ticket " + ticketId + " category ("+ getCategory() +") does not match " + newAgent.getFirstName() +" ("+ newAgent.getSpecialization() + ") specialization."); 
+        } // cannot assign to an agent with a different category from the ticket
+
+        String oldAgentName = (assignedAgent != null) ? getAssignedAgent().getFullName() : "Unassigned"; // if the there is a currently assigned agent get their name else put Unassigned
+
+        setAssignedAgent(newAgent); // Set assigned Agent
+        log(oldAgentName, newAgent.getFullName(), changedBy, reason); // Create a ticket log if successful
+    } // Used by Admin. Reassign a active ticket to a different agent with the same specialization
+
+    // State Helpers - Asks a quetsion of thhe current state of a ticket
+
+    public boolean isActive() { return (state.equalsIgnoreCase("OPEN") || state.equalsIgnoreCase("IN_PROGRESS")); } // Returns if a ticket is OPEN OR IN_PROGRESS
+    public boolean isResolved() { return (state.equalsIgnoreCase("RESOLVED")); } // returns if a ticket is RESOLVED
+    public boolean isFinished() { return state.equals("CLOSED") || state.equals("DELETED");  } // Returns if a ticket is CLOSED / DELTED. Finished tickets should no longer be edited
+    public boolean isDeleted() { return state.equals("DELETED"); } // Returns if a ticket is Deleted
+
+    // Throwers (early throw for UI Experiecne)
+
+    public void checkTransition(String newState) {
+        boolean valid = switch(this.state) {
+            case "OPEN"        -> newState.equalsIgnoreCase("IN_PROGRESS") || newState.equalsIgnoreCase("DELETED");
+            case "IN_PROGRESS" -> newState.equalsIgnoreCase("OPEN") || newState.equalsIgnoreCase("RESOLVED") || newState.equalsIgnoreCase("DELETED");
+            case "RESOLVED"    -> newState.equalsIgnoreCase("OPEN") || newState.equalsIgnoreCase("IN_PROGRESS") || newState.equalsIgnoreCase("CLOSED") || newState.equalsIgnoreCase("DELETED");
+            case "CLOSED"      -> newState.equalsIgnoreCase("DELETED");
+            default            -> false;
+        }; // Compares the current state and its allowed state change EX. An open ticket is only allowed to change to IN_PROGRESS
+        if (!valid) {
+            throw new IllegalStateException("Ticket " + ticketId + " cannot move from " + state + " to " + newState + ".");
+        }  // Throws an error if it is an invalid state transition
+    } 
+
+    public void requireNotFinished() {
+        if (isFinished()) {
+            throw new IllegalStateException("Ticket " + ticketId + " is " + state + " and can no longer be changed.");
+        }
+    } // throw and error if a ticket is already CLOSED / DELETED
+
+    public void requireActive() {
+        if (!isActive()) {
+            throw new IllegalStateException("Ticket " + ticketId + " is " + state + ". Only OPEN or IN_PROGRESS tickets allow this.");
+        }
+    } // Throw an error if a Ticket isnt OPEN / IN-PROGRESS
+
+    public void requireResolved() {
+        if (!isResolved()) {
+            throw new IllegalStateException("Ticket " + ticketId + " is " + state + ". Only RESOLVED tickets allow this.");
+        }
+    } // Throw an error if a ticket isnt Resolved
+
+    public void requireNotDeleted() {
+    if (isDeleted())
+        throw new IllegalStateException("Ticket " + ticketId + " is already DELETED.");
+    } // Throw an error if a Ticketr is Deleted
+
+    private String generateTicketId() {
+        ticketCounter++;
+        return String.format("TK-%03d", ticketCounter);
+    } // Creates an automatic TicketID when ticket is created 
+
+    private void log(String from, String to, User by, String reason) {
+        TicketLogEntry log = new TicketLogEntry(from, to, by.getUserId(), by.getFirstName(), reason.trim());
+        ticketLogEntries.add(log);
+    } // Creates a new ticketLog whenever something changes within a ticket EX: Priority, Agent, or a State change
+
+}
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/Ticket.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/entitylayer/TicketLogEntry.java"
+package entitylayer;
+
+import java.time.LocalDateTime;
+
+public class TicketLogEntry {
+
+    private final String ticketLogEntryId;
+    private final String previousState;
+    private final String newState;
+    private final String changedByUserId;
+    private final String changedByUserName;
+    private final LocalDateTime timestamp;
+    private final String reason;
+    private static int ticketLogEntryCounter = 0;
+
+    public TicketLogEntry(String previousState, String newState, String changedByUserId, String changedByUserName, String reason) {
+        this.ticketLogEntryId = generateTicketLogEntryId();
+        this.previousState = previousState;
+        this.newState = newState;
+        this.changedByUserId = changedByUserId;
+        this.changedByUserName = changedByUserName;
+        this.timestamp = LocalDateTime.now();
+        this.reason = reason;
+    }
+
+    public String getTicketLogEntryId() { return ticketLogEntryId; }
+    public String getPreviousState() { return previousState; }
+    public String getNewState() { return newState; }
+    public String getChangedByUserId() { return changedByUserId; }
+    public String getChangedByUserName() { return changedByUserName; }
+    public LocalDateTime getTimestamp() { return timestamp; }
+    public String getReason() { return reason; }
+
+    private String generateTicketLogEntryId() {
+        ticketLogEntryCounter++;
+        return String.format("LG-%03d", ticketLogEntryCounter);
+    } // called whenever a new log is created
+
+    public String getTime() {
+        return getTimestamp().format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm"));
+    }
+
+}
+
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/TicketLogEntry.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/entitylayer/User.java"
+package entitylayer;
+
+import datalayer.Repository;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+
+public abstract class User {
+
+    private final String userId;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String password;
+    private final LocalDateTime dateRegistered;
+    private final Repository repository;
+    private final String role;
+
+    public User(String role, String userId, String firstName, String lastName, String email, String password, Repository repository) {
+        this.role = role;
+        this.userId = userId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.password = password;
+        this.dateRegistered = LocalDateTime.now();
+        this.repository = repository;
+    }
+
+    // Setters
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+    public void setEmail(String email) { this.email = email; }
+    public void setPassword(String password) { this.password = password; }
+
+    // Getters
+    public String getRole() { return role; }
+    public String getUserId() { return userId; }
+    public String getFirstName() { return firstName; }
+    public String getLastName() { return lastName; }
+    public String getFullName() {return firstName + " " + lastName;}
+    public String getEmail() { return email; }
+    public String getPassword() { return password; }
+    public LocalDateTime getDateRegistered() { return dateRegistered; }
+    public String getDateRegisteredFormatted() {return dateRegistered.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm"));}
+    protected Repository getRepository() {return repository;}
+
+    // Others
+    public boolean checkPassword(String password) { return this.password != null && this.password.equals(password); } 
+    public abstract Ticket getTicket(String ticketId);
+    public abstract ArrayList<Ticket> getTickets();
+
+}
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/User.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/presentationlayer/AdminMenu.java"
+package presentationlayer;
+
+import datalayer.Repository;
+import entitylayer.Admin;
+import entitylayer.Comment;
+import entitylayer.Faculty;
+import entitylayer.Student;
+import entitylayer.SupportAgent;
+import entitylayer.Ticket;
+import entitylayer.TicketLogEntry;
+import entitylayer.User;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Scanner;
+
+
+public class AdminMenu extends BaseMenu {
+
+    private final Admin admin;
+
+    public AdminMenu(Admin admin, Scanner input, Repository repository) {
+        super(admin, input, repository);
+        this.admin = admin;
+    }
+
+    @Override
+    protected void displayMenu() {
+        printHeader("ADMIN MENU");
+        System.out.println("[1] View All Users");
+        System.out.println("[2] View User Details");
+        System.out.println("[3] View All Tickets");
+        System.out.println("[4] View Ticket Details");
+        System.out.println("[5] Reassign Ticket");
+        System.out.println("[6] Delete Ticket");
+        System.out.println("[7] Generate Summary Report");
+        System.out.println("[0] Logout");
+    }
+
+    @Override
+    protected void executeChoice(int choice) {
+        switch(choice) {
+            case 1 -> { viewAllUsers(); }
+            case 2 -> { viewUserDetails();}
+            case 3 -> { viewAllTickets(); }
+            case 4 -> { viewTicketDetails(); }
+            case 5 -> { reassignTicket(); }
+            case 6 -> { deleteTicket();}
+            case 7 -> { generateSummaryReport(); }
+            case 0 -> { System.out.println("Logging out. Goodbye!"); stop(); }
+        }
+    }
+
+     @Override
+    protected int getMinChoice() {
+        return 0;
+    }
+
+    @Override
+    protected int getMaxChoice() {
+        return 7;
+    }
+
+    public void viewAllUsers() {
+        while (true) {
+            printHeader("View All Users");
+            System.out.println("[1] All users");
+            System.out.println("[2] Filter by ID");
+            System.out.println("[3] Filter by Role (REQUESTOR, SUPPORTAGENT, ADMIN)");
+            System.out.println("[4] Filter by Name");
+            System.out.println("[5] Filter by Specialization");
+            System.out.println("[0] Back");
+            System.out.println();
+            int choice = readInt("Choice: ", 0, 5);
+
+            if (choice == 0) { System.out.println("Returning to previous menu..."); return;}
+            ArrayList<User> users;
+            if (choice == 1) { users = admin.getAllUsers(); } else {
+                String field = switch(choice) {
+                    case 2  ->  "ID";
+                    case 3  ->  "ROLE"; 
+                    case 4  ->  "NAME";
+                    default -> "SPECIALIZATION"; 
+                };
+                String value = switch (field) {
+                    case "ROLE" -> readRole();
+                    case "SPECIALIZATION" -> readCategory();
+                    case "ID", "NAME" -> readLine("Enter " + field.toLowerCase() + " to match: ", false);
+                    default -> throw new IllegalArgumentException("Unsupported filter field: " + field);
+                };
+                 users = admin.filterUsers(field, value);
+            }
+            System.out.println();
+            displayUsers(users);
+            waitForEnter();
+        }
+    }
+
+    public void viewUserDetails() {
+        printHeader("View User Details");
+        String userId = readLine("Enter User ID: ", false);
+        try {
+            User foundUser = admin.getUser(userId);
+            viewUserDetails(foundUser);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        waitForEnter();
+    }
+
+    public void viewAllTickets() {
+        while (true) {
+            printHeader("View All Tickets");
+            System.out.println("[1] All tickets");
+            System.out.println("[2] Filter by State (OPEN, IN_PROGRESS, RESOLVED, CLOSED, DELETED)");
+            System.out.println("[3] Filter by Category");
+            System.out.println("[4] Filter by Priority (URGENT, HIGH, MEDIUM, LOW)");
+            System.out.println("[5] Filter by Requestor ID");
+            System.out.println("[6] Filter by Agent ID");
+            System.out.println("[0] Back");
+            System.out.println();
+            int choice = readInt("Choice: ", 0, 6);
+
+            if (choice == 0) { System.out.println("Returning to previous menu..."); return;}
+            ArrayList<Ticket> tickets;
+            if (choice == 1) { tickets = admin.getTickets(); } else {
+                String field = switch (choice) {
+                    case 2  -> "STATE";
+                    case 3  -> "CATEGORY";
+                    case 4  -> "PRIORITY";
+                    case 5  -> "USER";
+                    default -> "AGENT";
+                };
+                String value = switch(field) {
+                    case "STATE" -> readState();
+                    case "CATEGORY" -> readCategory();
+                    case "PRIORITY" -> readPriority();
+                    case "USER", "AGENT" -> readLine("Enter " + field.toLowerCase() + " to match: ", false);
+                    default -> throw new IllegalArgumentException("Unsupported filter field: " + field);
+                };
+                tickets = admin.filterTickets(field, value);
+            }
+            System.out.println();
+            tickets.sort((t1, t2) -> {
+                if (t1.getState().equals("DELETED") && !t2.getState().equals("DELETED")) return 1; // swap if t1 if deleted and t2 isnt
+                if (!t1.getState().equals("DELETED") && t2.getState().equals("DELETED")) return -1; // dont swap t1 isnt deleted but t2 is
+                return 0; 
+            });
+            displayTickets(tickets);
+            waitForEnter();
+        }
+    }
+
+    public void viewTicketDetails() {
+        printHeader("View Ticket Details");
+        String ticketId = readLine("Enter ticket ID: ", false);
+        try {
+            Ticket ticket = admin.getTicket(ticketId);
+            viewTicketDetails(ticket);
+        } catch (IllegalArgumentException e) {
+            printError(e.getMessage());
+        }
+        waitForEnter();
+    }
+
+    public void reassignTicket() {
+        printHeader("Reassign a Ticket");
+        String ticketId = readLine("Enter ticket ID: ", false);
+        try {
+            Ticket ticket = admin.getTicket(ticketId);
+            ticket.requireActive();
+            String agentId = readLine("Enter SupportAgent Id: ", false);
+            if (confirm("Reassign Ticket " + ticket.getTicketId() + " to agent " + agentId + "?")) {
+                String reason = readLine("Provide a reason for reassignment: ", false);
+                admin.reassignTicket(ticketId, agentId, reason);
+                System.out.println("Success! Ticket " + ticket.getTicketId() + " has been reassigned. to " + agentId);
+            } else {
+                 System.out.println("Reassignment Cancelled");
+            }
+        } catch (IllegalArgumentException | IllegalStateException  e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        waitForEnter();
+    }
+
+    public void deleteTicket() {
+        printHeader("Delete a Ticket");
+        String ticketId = readLine("Enter ticket ID: ", false);
+        try {
+            Ticket ticket = admin.getTicket(ticketId);
+            ticket.requireNotDeleted();
+            if (confirm("Delete Ticket " + ticket.getTicketId() + "?")) {
+                String reason = readLine("Provide a reason for Deletion: ", false);
+                admin.deleteTicket(ticketId, reason);
+                System.out.println("Success! Ticket " + ticket.getTicketId() + " has been Deleted.");
+            } else {
+                 System.out.println("Deletion Cancelled");
+            }
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            printError(e.getMessage());
+        }
+        waitForEnter();
+    }
+
+    public void generateSummaryReport() {
+        printHeader("Summary Report");
+        LinkedHashMap<String, Integer> counts = admin.getSummaryCounts();
+        String titles[] = {"Overview", "By State", "By Priority", "By Category"};
+        String groups[][] = {
+            {"TOTAL_TICKETS", "TOTAL_USERS", "UNASSIGNED_TICKETS"},
+            {"OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "DELETED"},
+            {"URGENT", "HIGH", "MEDIUM", "LOW"},
+            {"FACILITIES_MAINTENANCE", "SOFTWARE_SYSTEMS", "NETWORK", "HARDWARE", "ACCOUNT_SECURITY"}
+        };
+        for(int i = 0; i < titles.length; i++) {
+            System.out.println("----" + titles[i] + "----");
+            for (String key : groups[i]) {
+                printField(key, String.valueOf(counts.get(key)));
+                
+            }
+            System.out.println();
+        }
+        waitForEnter();
+    }
+
+    private void viewTicketDetails(Ticket t) {
+
+        System.out.println();
+        String requestorName = (t.getSubmittedBy() != null) ? t.getSubmittedBy().getFullName() : "Unknown";
+        String agentName = (t.getAssignedAgent() != null) ? t.getAssignedAgent().getFullName() : "Unassigned";
+
+        System.out.println("===== TICKET " + t.getTicketId() + " =====");
+        System.out.printf("%-13s : %s%n", "Requestor", requestorName);
+        System.out.printf("%-13s : %s%n", "Agent", agentName);
+        System.out.printf("%-13s : %s%n", "Category", t.getCategory());
+        System.out.printf("%-13s : %s%n", "Subject", t.getSubject());
+        System.out.printf("%-13s : %s%n", "Priority", t.getPriority());
+        System.out.printf("%-13s : %s%n", "State", t.getState());
+        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmittedFormatted());
+        System.out.printf("%-13s : %s%n", "Description", t.getDescription());
+        System.out.println();
+
+        System.out.println("--- Comments (" + t.getComments().size() + ") ---");
+        for (Comment c : t.getComments()) {
+            System.out.printf("[%s] %-20s : %s%n", c.getTime(), c.getAuthorName(), c.getMessage());
+        }
+        System.out.println();
+
+        System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
+        for (TicketLogEntry log : t.getTicketLogEntries()) {
+            System.out.printf("[%s] %-30s by %-12s | %s%n",
+                log.getTime(),
+                log.getPreviousState() + " -> " + log.getNewState(),
+                log.getChangedByUserName(),
+                log.getReason()
+            );
+        }
+        System.out.println(LINE);
+    }
+
+    private void viewUserDetails(User user) {
+
+        System.out.println();
+        System.out.println("======== User " + user.getUserId() + " ========");
+        System.out.printf("%-16s : %s%n", "Full Name", user.getFullName());
+        System.out.printf("%-16s : %s%n", "Email", user.getEmail());
+        System.out.printf("%-16s : %s%n", "Date Registered", user.getDateRegisteredFormatted());
+
+        if (user instanceof Student student) {
+            System.out.printf("%-16s : %s%n", "StudentId", student.getStudentId());
+            System.out.printf("%-16s : %s%n", "Program", student.getProgram());
+            System.out.printf("%-16s : %s%n", "Year-Level", student.getYearLevel());
+            System.out.printf("%-16s : %s%n", "Section", student.getSection());
+        }
+
+        if (user instanceof Faculty faculty) {
+            System.out.printf("%-16s : %s%n", "EmployeeId", faculty.getEmployeeId());
+            System.out.printf("%-16s : %s%n", "Departmment", faculty.getDepartment());
+            System.out.printf("%-16s : %s%n", "Position", faculty.getPosition());
+            System.out.printf("%-16s : %s%n", "Desk-Extension", faculty.getDeskExtension());
+        }
+
+
+        if (user instanceof SupportAgent supportAgent) {
+            System.out.printf("%-16s : %s%n", "EmployeeId", supportAgent.getEmployeeId());
+            System.out.printf("%-16s : %s%n", "Specialization", supportAgent.getSpecialization());
+            System.out.printf("%-16s : %s%n", "Desk-Extension", supportAgent.getDeskExtension());
+        }
+
+        if (user instanceof Admin adminUser) {
+            System.out.printf("%-16s : %s%n", "EmployeeId", adminUser.getEmployeeId());
+            System.out.printf("%-16s : %s%n", "Specialization", adminUser.getManagedDepartment());
+            System.out.printf("%-16s : %s%n", "Desk-Extension", adminUser.getDeskExtension());
+        }
+
+
+    }
+
+    private void displayUsers(ArrayList<User> users) {
+        if (users.isEmpty()) {
+            printError("No users found.");
+            return;
+        }
+        System.out.printf("%-10s | %-13s | %-20s | %s%n ", "ID", "Role", "Name", "Email");
+        System.out.println("-".repeat(90));
+        for (User u : users) {
+            if (u == null) {
+                continue;
+            }
+            System.out.printf("%-10s | %-13s | %-20s | %s%n",
+                truncate(u.getUserId(), 10),
+                truncate(u.getRole(), 13),
+                truncate(u.getFullName(), 20),
+                truncate(u.getEmail(), 25)
+            );
+        }
+        System.out.println();
+    }
+
+
+}
+
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/presentationlayer/AdminMenu.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/presentationlayer/BaseMenu.java"
+package presentationlayer;
+import datalayer.Repository;
+import entitylayer.Comment;
+import entitylayer.Ticket;
+import entitylayer.TicketLogEntry;
+import entitylayer.User;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public abstract class BaseMenu {
+
+    protected User user;
+    protected Scanner input;
+    protected boolean running;
+    protected Repository repository;
+    private static final int WIDTH = 60;
+
+    public static String LINE = "======================================";
+
+    protected BaseMenu(User user, Scanner input, Repository repository) {
+        this.input = input;
+        this.user = user;
+        this.repository = repository;
+        this.running = true;
+    }
+
+    public void run() {
+        while (running) {
+            System.out.println();
+            displayMenu(); // display your menu
+            System.out.println("");
+            int choice = readInt("Enter your choice: ", getMinChoice(), getMaxChoice()); // prompts the user
+            executeChoice(choice); // executes that choice
+        }
+    } // Contains Main loop of Menus only
+
+    public void stop() {
+        this.running = false;
+    }
+
+    protected void displayTicket(Ticket t) {
+        String agentName = (t.getAssignedAgent() != null) ? t.getAssignedAgent().getFullName() : "Unassigned";
+        String requestorName = (t.getSubmittedBy() != null) ? t.getSubmittedBy().getFullName() + " (" + t.getSubmittedBy().getRole() + ")" : "Unknown";
+
+        printHeader(" TICKET " + t.getTicketId());
+        System.out.printf("%-13s : %s%n", "Category", t.getCategory());
+        System.out.printf("%-13s : %s%n", "Subject", t.getSubject());
+        System.out.printf("%-13s : %s%n", "Priority", t.getPriority());
+        System.out.printf("%-13s : %s%n", "State", t.getState());
+        System.out.printf("%-13s : %s%n", "Requestor", requestorName);
+        System.out.printf("%-13s : %s%n", "Agent", agentName);
+        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmittedFormatted());
+        System.out.printf("%-13s : %s%n", "Description", t.getDescription());
+        System.out.println();
+    
+        printField("Comments", String.valueOf(t.getComments().size()));
+        for (Comment c : t.getComments()) {
+            System.out.printf("[%s] %-30s | %s%n", c.getTime(), c.getAuthorName(), c.getMessage());
+        }
+        System.out.println();
+
+        printField("History", String.valueOf(t.getTicketLogEntries().size()));
+        for (TicketLogEntry log : t.getTicketLogEntries()) {
+            System.out.printf("[%s] %-30s | %s%n", log.getTime(), (log.getPreviousState() + " -> " + log.getNewState()),  log.getReason() );
+        }
+        System.out.println();
+        printDivider();
+    }
+
+    protected void displayTickets(ArrayList<Ticket> tickets) {
+       if (tickets.isEmpty()) {
+            printError("No tickets found.");
+            return;
+        }
+
+        System.out.printf("%-10s | %-15s | %-15s | %-15s | %-20s | %-10s | %-12s | %s%n", "ID", "Requestor", "Agent", "Category", "Subject", "Priority", "State", "Description");
+        System.out.println("-".repeat(148));
+
+        for (Ticket t : tickets) {
+            String requestorName = (t.getSubmittedBy() != null) ? t.getSubmittedBy().getFullName() : "Unknown";
+            String agentName = (t.getAssignedAgent() != null) ? t.getAssignedAgent().getFullName() : "Unassigned";
+            System.out.printf("%-10s | %-15s | %-15s | %-15s | %-20s | %-10s | %-12s | %s%n",
+                truncate(t.getTicketId(), 10),
+                truncate(requestorName, 15),
+                truncate(agentName, 15),
+                truncate(t.getCategory(), 15),
+                truncate(t.getSubject(), 20),
+                truncate(t.getPriority(), 10),
+                truncate(t.getState(), 12),
+                truncate(t.getDescription(), 30)
+            );
+        }
+        System.out.println();
+    }
+
+    protected int readInt(String prompt, int min, int max) {
+        while (true) {
+            System.out.print(prompt);
+            String rawInput = input.nextLine();
+            if (rawInput == null || rawInput.trim().isEmpty()) {
+                System.out.println("Input cannot be blank. Please try again");
+                continue;
+            } 
+            try {
+                int value = Integer.parseInt(rawInput.trim());
+                if (value >= min && value <= max) { return value; }
+                System.out.println("Invalid choice. Please enter a number between " + min + " and " + max + ".");
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+            }
+        }
+    }
+
+    protected String readLine(String prompt, boolean allowBlank) {
+        while (true) {
+            System.out.print(prompt);
+            String line = input.nextLine();
+
+            if (line != null) {
+                line = line.trim();
+                if (allowBlank || !line.isEmpty()) {
+                    return line;
+                }
+            }
+            System.out.println("Field cannot be blank. Please enter a valid value.");
+        }
+    } 
+
+    protected String truncate(String text, int maxLength) {
+        if (text == null) { return ""; }
+        if (text.length() <= maxLength) {return text;}
+        if (maxLength <= 3) { return text.substring(0, maxLength); }
+        return text.substring(0, maxLength -3) + "...";
+    }
+
+    protected boolean confirm(String prompt) {
+        while (true) {
+            System.out.print(prompt + " [Y/N]: ");
+            String rawChoice = input.nextLine();
+            if (rawChoice == null || rawChoice.trim().isEmpty()) {
+                System.out.println("Input cannot be blank. Please try again.");
+                continue;
+            }
+            String choice = rawChoice.trim().toLowerCase();
+            if (choice.equals("y") || choice.equals("yes")) {
+                return true;
+            } else if (choice.equals("n") || choice.equals("no")) {
+                return false;
+            } 
+            System.out.println("Invalid Input. Please enter Y for Yes, and N for No.");
+        }
+    } // asks a question then returns the choice
+
+    protected void waitForEnter() {
+        System.out.print("\nPress Enter to proceed: ");
+        input.nextLine();
+    } 
+
+    protected String readPriority() {
+        while(true) {
+            System.out.println("");
+            System.out.println("[1] LOW");
+            System.out.println("[2] MEDIUM");
+            System.out.println("[3] HIGH");
+            System.out.println("[4] URGENT");
+            System.out.println("");
+            int choice = readInt("Enter Priority: ", 1, 4);
+            switch (choice) {
+                case 1 -> { return "LOW"; }
+                case 2 -> { return "MEDIUM"; }
+                case 3 -> { return "HIGH"; }
+                case 4 -> { return "URGENT"; }
+            }
+        }
+    }
+
+    protected String readCategory() {
+        while(true) {
+            System.out.println("");
+            System.out.println("[1] FACILITIES MAINTENANCE");
+            System.out.println("[2] SOFTWARE SYSTEMS");
+            System.out.println("[3] NETWORK");
+            System.out.println("[4] HARDWARE");
+            System.out.println("[5] ACCOUNT SECURITY"); 
+            System.out.println();
+            int choice = readInt("Enter Category: ", 1, 5);
+            switch (choice) {
+                case 1 -> { return "FACILITIES_MAINTENANCE"; }
+                case 2 -> { return "SOFTWARE_SYSTEMS"; }
+                case 3 -> { return "NETWORK"; }
+                case 4 -> { return "HARDWARE"; }
+                case 5 -> { return "ACCOUNT_SECURITY"; }
+            }
+        }
+    }
+
+    protected String readSubject(String category) {
+        switch (category) {
+            case "FACILITIES_MAINTENANCE" -> {
+                System.out.println();
+                System.out.println("[1] Plumbing & Leaks");
+                System.out.println("[2] HVAC & Temperature");
+                System.out.println("[3] Lighting & Electrical");
+                System.out.println("[4] Carpentry & Keys");
+                System.out.println("[5] Others (specify)");
+                System.out.println();
+                int choice = readInt("Enter Subject: ", 1, 5);
+                switch (choice) {
+                    case 1 -> { return "Plumbing & Leaks"; }
+                    case 2 -> { return "HVAC & Temperature"; }
+                    case 3 -> { return "Lighting & Electrical"; }
+                    case 4 -> { return "Carpentry & Keys"; }
+                    case 5 -> { return readLine("Enter Subject: ", false); }
+                }
+            }
+            case "SOFTWARE_SYSTEMS" -> {
+                System.out.println();
+                System.out.println("[1] LMS / Portal Issue");
+                System.out.println("[2] Software Installation");
+                System.out.println("[3] Email / Collaboration");
+                System.out.println("[4] Grading & Enrollment Tools ");
+                System.out.println("[5] Others (specify)");
+                System.out.println();
+                int choice = readInt("Enter Subject: ", 1, 5);
+                switch (choice) {
+                    case 1 -> { return "LMS / Portal Issue"; }
+                    case 2 -> { return "Software Installation"; }
+                    case 3 -> { return "Email / Collaboration"; }
+                    case 4 -> { return "Grading & Enrollment Tools "; }
+                    case 5 -> { return readLine("Enter Subject: ", false); }
+                }
+            }
+            case "NETWORK" -> {
+                System.out.println();
+                System.out.println("[1] Campus Wi-Fi Disconnect");
+                System.out.println("[2] Ethernet / Wired Port ");
+                System.out.println("[3] VPN Connection");
+                System.out.println("[4] Slow Internet Speed");
+                System.out.println("[5] Others (specify)");
+                System.out.println();
+                int choice = readInt("Enter Subject: ", 1, 5);
+                switch (choice) {
+                    case 1 -> { return "Campus Wi-Fi Disconnect"; }
+                    case 2 -> { return "Ethernet / Wired Port "; }
+                    case 3 -> { return "VPN Connection "; }
+                    case 4 -> { return "Slow Internet Speed"; }
+                    case 5 -> { return readLine("Enter Subject: ", false); }
+                }
+            }
+            case "HARDWARE" -> {
+                System.out.println();
+                System.out.println("[1] Computer / Lab PC Failure");
+                System.out.println("[2] Printer & Copier Jam");
+                System.out.println("[3] Classroom AV & Projector");
+                System.out.println("[4] Peripherals & Cables");
+                System.out.println("[5] Others (specify)");
+                System.out.println();
+                int choice = readInt("Enter Subject: ", 1, 5);
+                switch (choice) {
+                    case 1 -> { return "Computer / Lab PC Failure"; }
+                    case 2 -> { return "Printer & Copier Jam"; }
+                    case 3 -> { return "Classroom AV & Projector"; }
+                    case 4 -> { return "Peripherals & Cables"; }
+                    case 5 -> { return readLine("Enter Subject: ", false); }
+                }
+            }
+            case "ACCOUNT_SECURITY" -> {
+                System.out.println();
+                System.out.println("[1] Password Reset");
+                System.out.println("[2] Multi-Factor Auth (MFA)");
+                System.out.println("[3] Phishing & Scams");
+                System.out.println("[4] Access Permissions");
+                System.out.println("[5] Others (specify)");
+                System.out.println();
+                int choice = readInt("Enter Subject: ", 1, 5);
+                switch (choice) {
+                    case 1 -> { return "Password Reset"; }
+                    case 2 -> { return "Multi-Factor Auth (MFA)"; }
+                    case 3 -> { return "Phishing & Scams"; }
+                    case 4 -> { return "Access Permissions"; }
+                    case 5 -> { return readLine("Enter Subject: ", false); }
+                }
+            }
+        }
+        return readLine("Enter Subject: ", false);
+    }
+
+    protected String readState() { 
+        while(true) {
+            System.out.println("");
+            System.out.println("[1] OPEN");
+            System.out.println("[2] IN-PROGRESS");
+            System.out.println("[3] RESOLVED");
+            System.out.println("[4] CLOSED");
+            System.out.println("[5] DELETED");
+            System.out.println("");
+            int choice = readInt("Enter State: ", 1, 5);
+            switch (choice) {
+                case 1 -> { return "OPEN"; }
+                case 2 -> { return "IN_PROGRESS"; }
+                case 3 -> { return "RESOLVED"; }
+                case 4 -> { return "CLOSED"; }
+                case 5 -> { return "DELETED"; }
+            }
+        }
+    }
+
+    protected String readRole() {
+        while(true) {
+            System.out.println("");
+            System.out.println("[1] REQUESTOR");
+            System.out.println("[2] SUPPORTAGENT");
+            System.out.println("[3] ADMIN");
+            System.out.println("");
+            int choice = readInt("Enter Role: ", 1, 3);
+            switch (choice) {
+                case 1 -> { return "REQUESTOR"; }
+                case 2 -> { return "SUPPORT_AGENT"; }
+                case 3 -> { return "ADMIN"; }
+            }
+        }
+    }
+
+    protected void printLine(char c) {
+        System.out.println(String.valueOf(c).repeat(WIDTH));
+    }
+
+    protected void printHeader(String title) {
+        System.out.println();
+        printLine('=');
+        System.out.println(" " + title.toUpperCase());
+        printLine('=');
+    }
+
+    protected void printDivider() {
+        printLine('-');
+    }
+
+    protected void printSuccess(String message) {
+        System.out.println("[OK] " + message);
+    }
+ 
+    protected void printError(String message) {
+        System.out.println("[!] Error: " + message);
+    }
+
+    protected void printField(String label, String value) {
+        System.out.printf("%-14s: %s%n", label, value);
+    }
+
+    protected abstract void displayMenu();
+    protected abstract void executeChoice(int choice);
+    protected abstract int getMinChoice();
+    protected abstract int getMaxChoice();
+    
+}
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/presentationlayer/BaseMenu.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/presentationlayer/LoginMenu.java"
+package presentationlayer;
+
+import datalayer.Repository;
+import entitylayer.Ticket;
+import entitylayer.User;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class LoginMenu extends BaseMenu {
+
+    User authenticatedUser;
+
+    public LoginMenu(Scanner input, Repository repository) {
+        super(null, input, repository);
+    }
+
+    @Override
+    protected void displayMenu() {
+        printHeader("SYSTEM LOGIN");
+        System.out.println("[1] LOGIN");
+        System.out.println("[0] EXIT");
+    }
+
+    @Override
+    protected void executeChoice(int choice) {
+        switch (choice) {
+            case 1 -> handleLogin();
+            case 0 -> {
+                System.out.println("Exiting Application");
+                stop();
+            }
+        }
+        waitForEnter();
+    }
+
+    @Override
+    protected int getMinChoice() {
+        return 0;
+    }
+
+    @Override
+    protected int getMaxChoice() {
+        return 1;
+    }
+
+    private void handleLogin() {
+
+        printHeader("Please Enter Credentials");
+        String userId = readLine("User ID (e.g., REQ-001): ", false);
+        String userPassword = readLine("Password: ", false);
+
+        System.out.println();
+
+        User foundUser = repository.findUserById(userId);
+        if (foundUser == null || !foundUser.checkPassword(userPassword)) {
+            printError("Login Failed: Invalid User ID or Password.");
+            return;
+        }
+
+        printSuccess("Login Successful! Welcome, " + foundUser.getFullName() + " (" + foundUser.getRole() + ")");
+        authenticatedUser = foundUser;
+        stop();
+
+    }
+
+    public User getAuthenticatedUser() {
+        return authenticatedUser;
+    }
+
+    @Override
+    protected void displayTickets(ArrayList<Ticket> tickets) {
+    }
+
+}
+
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/presentationlayer/LoginMenu.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/presentationlayer/RequestorMenu.java"
+package presentationlayer;
+
+import datalayer.Repository;
+import entitylayer.Requestor;
+import entitylayer.Ticket;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class RequestorMenu extends BaseMenu {
+    private final Requestor requestor;
+
+    public RequestorMenu(Requestor requestor, Scanner input, Repository repository) {
+        super(requestor, input, repository);
+        this.requestor = requestor;
+    }
+
+    @Override
+    protected void displayMenu() {
+        printHeader("REQUESTOR MENU");
+        System.out.println("[1] Create Ticket");
+        System.out.println("[2] View My Tickets");
+        System.out.println("[3] View Detailed Ticket");
+        System.out.println("[4] Add Comment To Ticket");
+        System.out.println("[5] Delete Ticket");
+        System.out.println("[6] Reopen Ticket");
+        System.out.println("[7] Close Ticket");
+        System.out.println("[0] Logout");
+    }
+    
+    @Override
+    protected void executeChoice(int choice) {
+        switch (choice) {
+            case 1 -> { createTicket(); }
+            case 2 -> { viewMyTickets(); } 
+            case 3 -> { viewTicketDetails(); } 
+            case 4 -> { addComment(); } 
+            case 5 -> { deleteTicket(); } 
+            case 6 -> { reopenTicket(); } 
+            case 7 -> { closeTicket(); } 
+            case 0 -> { printHeader("Logging out. Goodbye!"); stop(); } // Ends the console loop after displaying the logout message.
+        }
+    }
+
+    @Override
+    protected int getMinChoice() {
+        return 0;
+    } 
+
+    @Override
+    protected int getMaxChoice() {
+        return 7;
+    }
+
+    public void createTicket() {
+        printHeader("Submit a New Ticket");
+
+        String priority = readPriority();
+        String category = readCategory();
+        String subject = readSubject(category);
+        String description = readLine("Enter Description: ", false);
+
+        try {
+            if (confirm("Submit this ticket?")) {
+                Ticket newTicket = requestor.createTicket(priority, category, subject, description);
+                requestor.submitTicket(newTicket);
+                System.out.println("");
+                displayTicket(newTicket);
+                System.out.println("");
+                printSuccess("Ticket submitted successfully!");
+                System.out.println();
+            } else {
+                System.out.println("Cancelled submitting ticket.");
+            } 
+        } catch (IllegalArgumentException e) {
+            printError(e.getMessage());
+        }
+
+        waitForEnter();
+    } 
+
+    public void viewMyTickets() {
+        while (true) {
+            ArrayList<Ticket> tickets = requestor.getTickets();
+            if (tickets.isEmpty()) {
+                System.out.println("No submitted tickets found.");
+                waitForEnter();
+                return;
+            }
+
+            printHeader("View Submitted Tickety");
+            System.out.println("[1] View all Tickets");
+            System.out.println("[2] View all Active Tickets");
+            System.out.println("[0] Back");
+            System.out.println();
+            int subChoice = readInt("Enter Choice: ", 0, 2);
+
+            switch (subChoice) { 
+                case 1 ->  { displayTickets(tickets); }
+                case 2 ->  { displayTickets(requestor.getActiveTickets()); }
+                case 0 ->  { System.out.println("Returning to previous menu..."); return;} // returns to the previous menu
+            }
+            waitForEnter();
+        }
+    }
+
+    public void viewTicketDetails() {
+        printHeader("View Ticket details ");
+
+        String ticketId = readLine("Enter Ticket ID to view details: ", false);
+        try {
+            Ticket ticket = requestor.getTicket(ticketId); 
+            displayTicket(ticket);
+        } catch (IllegalArgumentException | SecurityException e) {
+            printError(e.getMessage());
+        }
+        waitForEnter();
+    }
+
+    public void addComment() {
+        printHeader("Add comment to Ticket");
+        String ticketId = readLine("Enter ticket iD: ", false);
+
+        try {
+            Ticket ticket = requestor.getTicket(ticketId);
+            ticket.requireNotFinished();
+            String text = readLine("Enter comment: ", false);
+            if (confirm("Are you sure you to submit this comment?")) {
+                requestor.addComment(ticketId, text);
+                System.out.println("Success! Comment added to " + ticketId.toUpperCase());
+            } else {
+                System.out.println("Commenting Cancelled");
+            }
+        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
+            printError(e.getMessage());
+        }
+        waitForEnter();
+    }
+
+    public void deleteTicket() {
+        printHeader("Delete a Ticket");
+        
+        String ticketId = readLine("Enter ticket iD: ", false);
+        try {
+            Ticket ticket = requestor.getTicket(ticketId);
+            ticket.requireActive();
+            if(confirm("Are you sure you want to Delete ticket " + ticket.getTicketId() + "?")) {
+                String reason = readLine("Please provide a reason for Deletion: ", false);
+                requestor.deleteTicket(ticketId, reason);
+                System.out.println("Success! Ticket " + ticket.getTicketId() + " has successfully been Deleted.");
+            } else {
+                System.out.println("Deletion cancelled");
+            }
+        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
+            printError(e.getMessage());
+        }
+        waitForEnter();
+    }
+
+    public void reopenTicket() {
+        printHeader("Re-open a Ticket");
+
+        String ticketId = readLine("Enter ticket iD: ", false);
+        try {
+            Ticket ticket = requestor.getTicket(ticketId);
+            ticket.requireResolved(); 
+            if (confirm("Are you sure you want to Re-open ticket " + ticket.getTicketId() + "?")) {
+                String reason = readLine("Please provide a reason for reopening: ", false);
+                requestor.reopenTicket(ticketId, reason);
+                System.out.println("Success! Ticket " + ticket.getTicketId() + " has successfully been re-opened.");
+            } else {
+                System.out.println("Reopening Cancelled");
+            }
+        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
+            printError(e.getMessage());
+        }
+        waitForEnter();
+    }
+    
+    public void closeTicket() {
+        printHeader("Close a Ticket");
+
+        String ticketId = readLine("Enter ticket iD: ", false);
+        try {
+            Ticket t = requestor.getTicket(ticketId);
+            t.checkTransition("CLOSED");
+            if(confirm("Are you sure you want to Close ticket " + t.getTicketId() + "?")) {
+                String reason = readLine("Please provide a reason for Closing: ", false);
+                requestor.closeTicket(ticketId, reason);
+                System.out.println("Success! Ticket " + t.getTicketId() + " has successfully been Closed.");
+            } else {
+                System.out.println("Ticket closing Cancelled");
+            }
+        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
+            printError(e.getMessage());
+        }
+        waitForEnter();
+    }
+    
+}
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/presentationlayer/RequestorMenu.java"
+<<<WORKSPACE_EXPORTER_FILE_BEGIN>>> path="src/presentationlayer/SupportAgentMenu.java"
+package presentationlayer;
+
+import datalayer.Repository;
+import entitylayer.SupportAgent;
+import entitylayer.Ticket;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class SupportAgentMenu extends BaseMenu {
+
+    private final SupportAgent supportAgent;
+
+    public SupportAgentMenu(SupportAgent supportAgent, Scanner input, Repository repository) {
+        super(supportAgent, input, repository);
+        this.supportAgent = supportAgent;
+    }
+
+    @Override
+    protected void displayMenu() {
+        printHeader("SUPPORTAGENT MENU");
+        System.out.println("[1] View Assigned Tickets");
+        System.out.println("[2] View Ticket Details");
+        System.out.println("[3] Update Ticket Status");
+        System.out.println("[4] Update Ticket Priority");
+        System.out.println("[5] Add Comment");
+        System.out.println("[0] Logout");
+    }
+
+    @Override
+    protected int getMinChoice() {
+        return 0;
+    }
+
+    @Override
+    protected int getMaxChoice() {
+        return 5;
+    }
+
+    @Override
+    protected void executeChoice(int choice) {
+        switch (choice) {
+            case 1 -> { viewAssignedTickets(); }
+            case 2 -> { viewTicketDetails(); } 
+            case 3 -> { updateTicketState(); } 
+            case 4 -> { updateTicketPriority(); }
+            case 5 -> { addComment(); }
+            case 0 -> { System.out.println("Logging out. Goodbye!"); stop();}
+        }
+    }
+
+    public void viewAssignedTickets() {
+        while (true) {
+            ArrayList<Ticket> tickets = supportAgent.getTickets();
+            if (tickets.isEmpty()) {
+                System.out.println("No assigned tickets found.");
+                waitForEnter();
+                return;
+            }
+
+            printHeader("View Tickets");
+            System.out.println("[1] View all AssignedTickets");
+            System.out.println("[2] View all Active Tickets");
+            System.out.println("[0] Back");
+            System.out.println();
+            int subChoice = readInt("Enter chocie: ", 0, 2);
+
+            switch (subChoice) { 
+                case 1 ->  { displayTickets(tickets); }
+                case 2 ->  { displayTickets(supportAgent.getActiveTickets()); }
+                case 0 ->  { System.out.println("Returning to previous menu..."); return;} // returns to the previous menu
+            }
+            waitForEnter();
+        }
+    }
+
+    public void viewTicketDetails() {
+        printHeader("View Ticket Details");
+        String ticketId = readLine("Enter ticket ID: ", false);
+        try {
+            Ticket ticket = supportAgent.getTicket(ticketId);
+            displayTicket(ticket);
+        } catch (IllegalArgumentException | SecurityException e) {
+            printError(e.getMessage());
+        }
+        waitForEnter();
+    }
+
+    public void updateTicketState() {
+        printHeader("Update Ticket Status");
+        String ticketId = readLine("Enter ticket ID: ", false);
+        try {
+            Ticket ticket = supportAgent.getTicket(ticketId);
+            ticket.requireNotFinished();
+            String oldState = ticket.getState();
+            String newState = readAgentState();
+            ticket.checkTransition(newState);
+            if (confirm("Change ticket state from " + oldState + " to " + newState + "?")) {
+                String reason = readLine("Enter a reason: ", false);
+                supportAgent.updateTicketState(ticketId, newState, reason);
+                System.out.println("Ticket state changed successful.");
+            } else {
+                System.out.println("Ticket state change Cancelled.");
+            }
+        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
+            printError(e.getMessage());
+        }
+        waitForEnter();
+    }
+
+    public void updateTicketPriority() {
+        printHeader("Update Ticket Priority");
+        String ticketId = readLine("Enter ticket ID: ", false);
+        try {
+            Ticket ticket = supportAgent.getTicket(ticketId);
+            ticket.requireNotFinished();
+            String oldPriority = ticket.getPriority();
+            String newPriority = readPriority();
+            if (confirm("Change ticket priority from " + oldPriority + " to " + newPriority + "?")) {
+                String reason = readLine("Enter a reason: ", false);
+                supportAgent.updatePriority(ticketId, newPriority, reason);
+                System.out.println("Success! Ticket priority has been changed from " + oldPriority  + " to " + newPriority);
+            } else { 
+                System.out.println("Ticket priority change Cancelled.");
+            }
+        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
+            printError(e.getMessage());
+        }
+        waitForEnter();
+    }
+
+    public void addComment() {
+        printHeader("Add Comment");
+        String ticketId = readLine("Enter ticket ID: ", false);
+        try {
+            Ticket ticket = supportAgent.getTicket(ticketId);
+            ticket.requireNotFinished();
+            String message = readLine("Enter comment: ", false);
+            supportAgent.addComment(ticketId, message);
+            System.out.println("Success! Comment added to " + ticket.getTicketId() + ".");
+        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
+           printError(e.getMessage());
+        }
+        waitForEnter();
+    }
+
+    private String readAgentState() { 
+        while(true) {
+            System.out.println("");
+            System.out.println("[1] OPEN");
+            System.out.println("[2] IN-PROGRESS");
+            System.out.println("[3] RESOLVED");
+            System.out.println("");
+            int choice = readInt("choice: ", 1, 3);
+            switch (choice) {
+                case 1 -> { return "OPEN"; }
+                case 2 -> { return "IN_PROGRESS"; }
+                case 3 -> { return "RESOLVED"; }
+            }
+        }
+    }
+
+}
+
+<<<WORKSPACE_EXPORTER_FILE_END>>> path="src/presentationlayer/SupportAgentMenu.java"

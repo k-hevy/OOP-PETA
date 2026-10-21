@@ -2,6 +2,7 @@ package entitylayer;
 
 import datalayer.Repository;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 public abstract class User {
 
@@ -12,8 +13,10 @@ public abstract class User {
     private String password;
     private final LocalDateTime dateRegistered;
     private final Repository repository;
+    private final String role;
 
-    public User(String userId, String firstName, String lastName, String email, String password, Repository repository) {
+    public User(String role, String userId, String firstName, String lastName, String email, String password, Repository repository) {
+        this.role = role;
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -30,6 +33,7 @@ public abstract class User {
     public void setPassword(String password) { this.password = password; }
 
     // Getters
+    public String getRole() { return role; }
     public String getUserId() { return userId; }
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
@@ -37,12 +41,22 @@ public abstract class User {
     public String getEmail() { return email; }
     public String getPassword() { return password; }
     public LocalDateTime getDateRegistered() { return dateRegistered; }
-    public String getDateRegisteredFormatted() {return dateRegistered.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm"));}
     protected Repository getRepository() {return repository;}
 
     // Others
     public boolean checkPassword(String password) { return this.password != null && this.password.equals(password); } 
-    public abstract String getRole();
     public abstract Ticket getTicket(String ticketId);
+    public abstract ArrayList<Ticket> getTickets();
+
+    public ArrayList<Ticket> getActiveTickets() {
+        ArrayList<Ticket> myTickets = new ArrayList<>();
+        for (Ticket ticket : getTickets()) {
+            if (ticket.isActive()) {
+                myTickets.add(ticket);
+            }
+        }
+        return myTickets;
+     } // Returns all tickets submitted by the requestor that are OPEN / INPROGRESS except Deleted ones
+
 
 }
