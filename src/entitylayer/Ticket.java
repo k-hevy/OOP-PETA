@@ -92,7 +92,6 @@ public class Ticket {
         checkReassign(user);
         SupportAgent newAgent = (SupportAgent) user;
         String oldAgentName = (assignedAgent != null) ? getAssignedAgent().getFullName() : "Unassigned"; // if the there is a currently assigned agent get their name else put Unassigned
-        assignedAgent = newAgent;
         setAssignedAgent(newAgent); // Set assigned Agent
         log(oldAgentName, newAgent.getFullName(), changedBy, reason); // Create a ticket log if successful
     } // Used by Admin. Reassign a active ticket to a different agent with the same specialization

@@ -36,8 +36,4 @@ public class TicketLogEntry {
         return String.format("LG-%03d", ticketLogEntryCounter);
     } // called whenever a new log is created
 
-    public String getTime() {
-        return getTimestamp().format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm"));
-    }
-
 }

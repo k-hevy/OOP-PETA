@@ -256,9 +256,7 @@ public class Admin extends User {
 
     @Override
     public ArrayList<Ticket> getTickets() {
-        ArrayList<Ticket> allTickets = getRepository().getAllTickets();
-        if (allTickets == null) { return new ArrayList<>(); }
-        return allTickets;
+        return getRepository().getAllTickets();
     } // gets all tickets
 
     public User getUser(String userId) {
@@ -268,6 +266,10 @@ public class Admin extends User {
         } // Only throw an error if the user doesnt exists
         return user;
     } // Gets ALL users in the sysetm
+
+    public ArrayList<User> getAllUsers() {
+        return getRepository().getAllUsers();
+    } // gets all users
     
     // Getters
     public String getEmployeeId() { return employeeId; }
@@ -290,15 +292,8 @@ public class Admin extends User {
         ticket.deleteTicket(this, reason);
     } // Deletes any tickets that isnt already deleted
 
-    public ArrayList<User> getAllUsers() {
-        ArrayList<User> allUsers = getRepository().getAllUsers();
-        if (allUsers == null) { return new ArrayList<>(); }
-        return allUsers;
-    } // gets all users
-
     public ArrayList<Ticket> filterTickets(String field, String value) {
         ArrayList<Ticket> result = new ArrayList<>();
-        
         ArrayList<Ticket> allTickets = getTickets(); // gets all tickets
         for (Ticket ticket : allTickets) { // EX FIELD = CATEGORY, VALUE = MAINTENANCE
             String actual = switch (field.toUpperCase()) {
@@ -319,10 +314,8 @@ public class Admin extends User {
 
     public ArrayList<User> filterUsers(String field, String value) {
         ArrayList<User> result = new ArrayList<>();
-
-        String searchItem = value.toUpperCase();
-        ArrayList<User> allUsers = getAllUsers();  
-        for (User user : allUsers ) { // EX ROLE = CATEGORY, VALUE = REQUESTOR
+        String searchItem = value.trim().toUpperCase();
+        for (User user : getAllUsers()) { // EX ROLE = CATEGORY, VALUE = REQUESTOR
             if (user == null) { continue; }
             String actual = switch(field.toUpperCase()) {
                 case "ID"             -> user.getUserId();
@@ -444,7 +437,7 @@ public class Requestor extends User {
         if (ticket == null || ticket.getState().equalsIgnoreCase("DELETED")) { 
             throw new IllegalArgumentException("Ticket " + ticketId +" was not found."); 
         } // Throw an error if you try to acces a ticket that doesnt exist
-        if (ticket.getSubmittedBy() == null || !ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId())) { 
+        if (!ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId())) { 
             throw new SecurityException("You can only view your own tickets."); 
         } // Throw an Error if you try to access a ticket that isnt your
         return ticket;  
@@ -454,7 +447,6 @@ public class Requestor extends User {
     public ArrayList<Ticket> getTickets() {
        ArrayList<Ticket> myTickets = new ArrayList<>();
         ArrayList<Ticket> allTickets = getRepository().getAllTickets();
-        if (allTickets == null ) { return myTickets; }
         for (Ticket ticket : allTickets) {
                 if (ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId()) && !ticket.isDeleted()) {
                     myTickets.add(ticket);
@@ -466,10 +458,6 @@ public class Requestor extends User {
     public Ticket createTicket(String priority, String category, String subject, String description) {
         return new Ticket(this, null, priority, category, subject, description);
     } // Create a ticket 
-
-    public Comment createComment(String message){
-        return new Comment(this, message);
-    } // Create A comment
     
     public void submitTicket(Ticket ticket) {
         autoAssignAgent(ticket); // tickets stays unassigned if no agent matches
@@ -489,23 +477,13 @@ public class Requestor extends User {
      
     public void addComment(String ticketId, String message) {
         Ticket ticket = getTicket(ticketId);
-        ticket.addComment(createComment(message));
+        ticket.addComment(new Comment(this, message));
     }
 
     public void closeTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
         ticket.closeTicket(this, reason);
     } // Close aticket that is resolved
-    
-    public ArrayList<Ticket> getActiveTickets() {
-        ArrayList<Ticket> myTickets = new ArrayList<>();
-        for (Ticket ticket : getTickets()) {
-            if (ticket.isActive()) {
-                myTickets.add(ticket);
-            }
-        }
-        return myTickets;
-     } // Returns all tickets submitted by the requestor that are OPEN / INPROGRESS except Deleted ones
 
     private void autoAssignAgent(Ticket ticket) {
 
@@ -516,7 +494,6 @@ public class Requestor extends User {
 
         for (User user : users) {
             if (!(user instanceof SupportAgent agent)) { continue; } // User must be a supportAgent
-            if (agent.getSpecialization() == null ) { continue; } // SupportAgent must have a specialization
             if (!agent.getSpecialization().equalsIgnoreCase(ticket.getCategory())) { continue; } // SupportAgent specializaiton must be thhe same as ticket category
             
             int activeCount = agent.getActiveTickets().size();
@@ -603,7 +580,7 @@ public class SupportAgent extends User {
     @Override
     public Ticket getTicket(String ticketId) {
         Ticket ticket = getRepository().findTicketById(ticketId);
-        if (ticket == null || ticket.getState().equalsIgnoreCase("DELETED")) {
+        if (ticket == null || ticket.isDeleted()) {
             throw new IllegalArgumentException("Ticket " + ticketId + " was not found.");
         } // Throw an error if the ticket doesnt exist
         if (ticket.getAssignedAgent() == null || !ticket.getAssignedAgent().getUserId().equalsIgnoreCase(getUserId()) ) { 
@@ -615,10 +592,7 @@ public class SupportAgent extends User {
     @Override
     public ArrayList<Ticket> getTickets() {
         ArrayList<Ticket> assignedTickets = new ArrayList<>();
-        ArrayList<Ticket> allTickets = getRepository().getAllTickets();
-        if (allTickets == null) { return assignedTickets; }
-
-        for (Ticket ticket : allTickets) {
+        for (Ticket ticket : getRepository().getAllTickets()) {
             if (ticket.getAssignedAgent() != null && ticket.getAssignedAgent().getUserId().equalsIgnoreCase(getUserId()) && !ticket.isDeleted()) {
                 assignedTickets.add(ticket);
             } // Get all tickets that assignedAgent ID matches mine that are also not deleted
@@ -626,37 +600,20 @@ public class SupportAgent extends User {
         return assignedTickets;
     } // Gets all assigned tickets that arent deleted
 
-    public Comment createComment(String message){
-        return new Comment(this, message);
-    } // create a new Comment
-
     public void addComment(String ticketId, String message) {
         Ticket ticket = getTicket(ticketId);
-        ticket.addComment(createComment(message));
-    } // add a comment to a ticket
+        ticket.addComment(new Comment(this, message));
+    }
 
     public void updateTicketState(String ticketId, String newState, String reason) {
-        if (newState.equalsIgnoreCase("DELETED") || newState.equalsIgnoreCase("CLOSED")) {
-            throw new SecurityException("Support agents cannot move a ticket to " + newState + ".");
-        }
         Ticket ticket = getTicket(ticketId);
-        ticket.changeState(newState, this, reason);
+        ticket.updateTicketState(newState, this, reason);
     } // Updates a ticket state Form picking From OPEN / IN PROGRESS / RESOLVED
 
     public void updatePriority(String ticketId, String newPriority, String reason) {
         Ticket ticket = getTicket(ticketId);
         ticket.changePriority(newPriority, this, reason);
     } // Updates aticket priority by picking from the 4. doesnt allow to assign the same priority
-
-    public ArrayList<Ticket> getActiveTickets() {
-        ArrayList<Ticket> myTickets = new ArrayList<>();
-          for (Ticket ticket : getTickets()) { // get All my assigned tickets
-            if (ticket.isActive()) { // chekc if they are OPEN / IN_PROGRESS
-                    myTickets.add(ticket); // if yes add them in this list
-            }
-          } 
-          return myTickets;
-    } // Returns a list of all OPEN / IN-PROGRESS agent tickets that are the Agent's
 
 }
 <<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/SupportAgent.java"
@@ -668,18 +625,19 @@ import java.util.ArrayList;
 
 public class Ticket {
 
-    private final LocalDateTime dateSubmitted;
     private final String ticketId;
+    private final LocalDateTime dateSubmitted;
     private final Requestor submittedBy;
+    private final String category;
+    private final String subject;
+    private final String description;
     private final ArrayList<Comment> comments;
     private final ArrayList<TicketLogEntry> ticketLogEntries;
     private static int ticketCounter = 0;
     private String state;
     private SupportAgent assignedAgent;
     private String priority;
-    private String category;
-    private String subject;
-    private String description;
+
 
     public Ticket(Requestor submittedBy, SupportAgent assignedAgent, String priority, String category, String subject, String description) {
         this.ticketId = generateTicketId();
@@ -711,10 +669,7 @@ public class Ticket {
     public ArrayList<TicketLogEntry> getTicketLogEntries() {return new ArrayList<>(ticketLogEntries);}
 
     // setters
-    public void setAssignedAgent(SupportAgent agent) {this.assignedAgent = agent;} // Used by auto assign later
-    public void setCategory(String category) {this.category = category; }
-    public void setSubject(String subject) { this.subject = subject; }
-    public void setDescription(String description) {this.description = description;}
+    public void setAssignedAgent(SupportAgent agent) {this.assignedAgent = agent;} // Only used by Requestor's auto-assignOnly used by Requestor's auto-assign
 
     // Ticket actions
 
@@ -723,16 +678,14 @@ public class Ticket {
         comments.add(comment);
     } // Used by requestor / SupportAgent
 
-    public void changeState(String newState, User changedBy, String reason) {
-        checkTransition(newState); // validates if valid state change from Current --> newState. Throws error if yes
-        String oldState = state; // remember oldState
-        state = newState.toUpperCase(); // assign new State
-        log(oldState, state, changedBy, reason); // Creates a tickert log if succesful
+    public void updateTicketState(String newState, User changedBy, String reason) {
+        checkWorkFlowMoves(newState);
+        move(newState, changedBy, reason);
     } // Used by SupportAgent 
 
     public void changePriority(String newPriority, User changedBy, String reason) {
         requireActive(); // A ticket should still be OPEN / IN-PROGRESS to be able to change its priority
-        if (newPriority.equalsIgnoreCase(getPriority())) { 
+        if (newPriority.equalsIgnoreCase(priority)) { 
             throw new IllegalArgumentException("Ticket " + ticketId + " is already " + priority + " priority"); 
         } // Fail if the current priority and newPriority are the same
         String oldPriority = this.priority;
@@ -741,42 +694,25 @@ public class Ticket {
     } // Used by SupportAgent, checks for rules in changing a priority
     
     public void closeTicket(User by, String reason) {
-        changeState("CLOSED", by, reason); // Check this method
+        requireResolved();
+        move("CLOSED", by, reason);
     }  // Used by Requestor
 
     public void reopenTicket(User by, String reason) {
         requireResolved(); // A ticket can only be reopened if its RESOLVED
-        changeState("OPEN", by, reason);
+        move("OPEN", by, reason);
     } // Used by Requestor
 
     public void deleteTicket(User by, String reason) {
         requireNotFinished();
-        changeState("DELETED", by, reason);
+        move("DELETED", by, reason);
     } // Used by Requestor (can only delete OPEN/ INPROGRESS Tickets) and Admin (Admin can delete a ticket from any state except DELETED)
 
     public void reassignTicket(User user, User changedBy, String reason) {
-        requireActive(); // A ticket should still be OPEN / IN-PROGRESS
-        
-        if (user == null) {
-            throw new IllegalArgumentException("This User doesnt exist");
-        } // throw an error if thhe user doesnt exist
-
-        if (!(user instanceof SupportAgent)) { 
-            throw new IllegalArgumentException("User with " + user.getFullName() + " is not an agent.");
-        } // Throw an error if the user isnt a supportAgent
-
-        SupportAgent newAgent = (SupportAgent) user; // downcast User if they are asupportAgent
-        
-        if (assignedAgent != null && assignedAgent.equals(newAgent)) { 
-            throw new IllegalArgumentException("Ticket " + ticketId + " is already assigned to " + newAgent.getFirstName() + "."); 
-        } // Cannot assign to same agent
-
-        if (!newAgent.getSpecialization().equalsIgnoreCase(category)) {
-            throw new IllegalArgumentException("Ticket " + ticketId + " category ("+ getCategory() +") does not match " + newAgent.getFirstName() +" ("+ newAgent.getSpecialization() + ") specialization."); 
-        } // cannot assign to an agent with a different category from the ticket
-
+        checkReassign(user);
+        SupportAgent newAgent = (SupportAgent) user;
         String oldAgentName = (assignedAgent != null) ? getAssignedAgent().getFullName() : "Unassigned"; // if the there is a currently assigned agent get their name else put Unassigned
-
+        assignedAgent = newAgent;
         setAssignedAgent(newAgent); // Set assigned Agent
         log(oldAgentName, newAgent.getFullName(), changedBy, reason); // Create a ticket log if successful
     } // Used by Admin. Reassign a active ticket to a different agent with the same specialization
@@ -785,23 +721,10 @@ public class Ticket {
 
     public boolean isActive() { return (state.equalsIgnoreCase("OPEN") || state.equalsIgnoreCase("IN_PROGRESS")); } // Returns if a ticket is OPEN OR IN_PROGRESS
     public boolean isResolved() { return (state.equalsIgnoreCase("RESOLVED")); } // returns if a ticket is RESOLVED
-    public boolean isFinished() { return state.equals("CLOSED") || state.equals("DELETED");  } // Returns if a ticket is CLOSED / DELTED. Finished tickets should no longer be edited
-    public boolean isDeleted() { return state.equals("DELETED"); } // Returns if a ticket is Deleted
+    public boolean isFinished() { return state.equalsIgnoreCase("CLOSED") || state.equals("DELETED");  } // Returns if a ticket is CLOSED / DELTED. Finished tickets should no longer be edited
+    public boolean isDeleted() { return state.equalsIgnoreCase("DELETED"); } // Returns if a ticket is Deleted
 
     // Throwers (early throw for UI Experiecne)
-
-    public void checkTransition(String newState) {
-        boolean valid = switch(this.state) {
-            case "OPEN"        -> newState.equalsIgnoreCase("IN_PROGRESS") || newState.equalsIgnoreCase("DELETED");
-            case "IN_PROGRESS" -> newState.equalsIgnoreCase("OPEN") || newState.equalsIgnoreCase("RESOLVED") || newState.equalsIgnoreCase("DELETED");
-            case "RESOLVED"    -> newState.equalsIgnoreCase("OPEN") || newState.equalsIgnoreCase("IN_PROGRESS") || newState.equalsIgnoreCase("CLOSED") || newState.equalsIgnoreCase("DELETED");
-            case "CLOSED"      -> newState.equalsIgnoreCase("DELETED");
-            default            -> false;
-        }; // Compares the current state and its allowed state change EX. An open ticket is only allowed to change to IN_PROGRESS
-        if (!valid) {
-            throw new IllegalStateException("Ticket " + ticketId + " cannot move from " + state + " to " + newState + ".");
-        }  // Throws an error if it is an invalid state transition
-    } 
 
     public void requireNotFinished() {
         if (isFinished()) {
@@ -826,10 +749,49 @@ public class Ticket {
         throw new IllegalStateException("Ticket " + ticketId + " is already DELETED.");
     } // Throw an error if a Ticketr is Deleted
 
+    public void checkWorkFlowMoves(String newState) {
+        boolean valid = switch(state) {
+            case "OPEN"        -> newState.equalsIgnoreCase("IN_PROGRESS");
+            case "IN_PROGRESS" -> newState.equalsIgnoreCase("OPEN") || newState.equalsIgnoreCase("RESOLVED");
+            case "RESOLVED"    -> newState.equalsIgnoreCase("IN_PROGRESS");
+            default            -> false;
+        }; // Compares the current state and its allowed state change EX. An open ticket is only allowed to change to IN_PROGRESS
+        if (!valid) {
+            throw new IllegalStateException("Ticket " + ticketId + " cannot move from " + state + " to " + newState + ".");
+        } // Throws an error if it is an invalid state transition
+    } // Used by SupportAgent
+
+    public void checkReassign(User user) {
+        requireActive(); // A ticket should still be OPEN / IN-PROGRESS
+        if (user == null) {
+            throw new IllegalArgumentException("This User doesnt exist");
+        } // throw an error if thhe user doesnt exist
+
+        if (!(user instanceof SupportAgent)) { 
+            throw new IllegalArgumentException("User with " + user.getFullName() + " is not an agent.");
+        } // Throw an error if the user isnt a supportAgent
+
+        SupportAgent newAgent = (SupportAgent) user; // downcast User if they are asupportAgent
+        
+        if (assignedAgent != null && assignedAgent.equals(newAgent)) { 
+            throw new IllegalArgumentException("Ticket " + ticketId + " is already assigned to " + newAgent.getFirstName() + "."); 
+        } // Cannot assign to same agent
+
+        if (!newAgent.getSpecialization().equalsIgnoreCase(category)) {
+            throw new IllegalArgumentException("Ticket " + ticketId + " category ("+ getCategory() +") does not match " + newAgent.getFirstName() +" ("+ newAgent.getSpecialization() + ") specialization."); 
+        } // cannot assign to an agent with a different category from the ticket
+    }
+    
     private String generateTicketId() {
         ticketCounter++;
         return String.format("TK-%03d", ticketCounter);
     } // Creates an automatic TicketID when ticket is created 
+
+    private void move(String newState, User by, String reason) {
+        String oldState = state; // remember oldState
+        state = newState.toUpperCase();  // assign new State
+        log(oldState, state, by, reason); // Creates a tickert log if succesful
+    } // the method that actually moves a ticket from a state
 
     private void log(String from, String to, User by, String reason) {
         TicketLogEntry log = new TicketLogEntry(from, to, by.getUserId(), by.getFirstName(), reason.trim());
@@ -928,13 +890,23 @@ public abstract class User {
     public String getEmail() { return email; }
     public String getPassword() { return password; }
     public LocalDateTime getDateRegistered() { return dateRegistered; }
-    public String getDateRegisteredFormatted() {return dateRegistered.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm"));}
     protected Repository getRepository() {return repository;}
 
     // Others
     public boolean checkPassword(String password) { return this.password != null && this.password.equals(password); } 
     public abstract Ticket getTicket(String ticketId);
     public abstract ArrayList<Ticket> getTickets();
+
+    public ArrayList<Ticket> getActiveTickets() {
+        ArrayList<Ticket> myTickets = new ArrayList<>();
+        for (Ticket ticket : getTickets()) {
+            if (ticket.isActive()) {
+                myTickets.add(ticket);
+            }
+        }
+        return myTickets;
+     } // Returns all tickets submitted by the requestor that are OPEN / INPROGRESS except Deleted ones
+
 
 }
 <<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/User.java"
@@ -1182,14 +1154,14 @@ public class AdminMenu extends BaseMenu {
 
         System.out.println("--- Comments (" + t.getComments().size() + ") ---");
         for (Comment c : t.getComments()) {
-            System.out.printf("[%s] %-20s : %s%n", c.getTime(), c.getAuthorName(), c.getMessage());
+            System.out.printf("[%s] %-20s : %s%n", formatDate(c.getTimestamp()), c.getAuthorName(), c.getMessage());
         }
         System.out.println();
 
         System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
         for (TicketLogEntry log : t.getTicketLogEntries()) {
             System.out.printf("[%s] %-30s by %-12s | %s%n",
-                log.getTime(),
+                formatDate(log.getTimestamp()),
                 log.getPreviousState() + " -> " + log.getNewState(),
                 log.getChangedByUserName(),
                 log.getReason()
@@ -1204,7 +1176,7 @@ public class AdminMenu extends BaseMenu {
         System.out.println("======== User " + user.getUserId() + " ========");
         System.out.printf("%-16s : %s%n", "Full Name", user.getFullName());
         System.out.printf("%-16s : %s%n", "Email", user.getEmail());
-        System.out.printf("%-16s : %s%n", "Date Registered", user.getDateRegisteredFormatted());
+        System.out.printf("%-16s : %s%n", "Date Registered", formatDate(user.getDateRegistered()));
 
         if (user instanceof Student student) {
             System.out.printf("%-16s : %s%n", "StudentId", student.getStudentId());
@@ -1268,6 +1240,8 @@ import entitylayer.Comment;
 import entitylayer.Ticket;
 import entitylayer.TicketLogEntry;
 import entitylayer.User;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -1277,9 +1251,11 @@ public abstract class BaseMenu {
     protected Scanner input;
     protected boolean running;
     protected Repository repository;
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final int WIDTH = 60;
 
     public static String LINE = "======================================";
+    
 
     protected BaseMenu(User user, Scanner input, Repository repository) {
         this.input = input;
@@ -1319,13 +1295,13 @@ public abstract class BaseMenu {
     
         printField("Comments", String.valueOf(t.getComments().size()));
         for (Comment c : t.getComments()) {
-            System.out.printf("[%s] %-30s | %s%n", c.getTime(), c.getAuthorName(), c.getMessage());
+            System.out.printf("[%s] %-30s | %s%n", formatDate(c.getTimestamp()), c.getAuthorName(), c.getMessage());
         }
         System.out.println();
 
         printField("History", String.valueOf(t.getTicketLogEntries().size()));
         for (TicketLogEntry log : t.getTicketLogEntries()) {
-            System.out.printf("[%s] %-30s | %s%n", log.getTime(), (log.getPreviousState() + " -> " + log.getNewState()),  log.getReason() );
+            System.out.printf("[%s] %-30s | %s%n", formatDate(log.getTimestamp()), (log.getPreviousState() + " -> " + log.getNewState()),  log.getReason() );
         }
         System.out.println();
         printDivider();
@@ -1612,6 +1588,9 @@ public abstract class BaseMenu {
         System.out.printf("%-14s: %s%n", label, value);
     }
 
+    protected String formatDate(LocalDateTime dateTime) {
+        return dateTime.format(DATE_FORMAT);
+    }
     protected abstract void displayMenu();
     protected abstract void executeChoice(int choice);
     protected abstract int getMinChoice();
@@ -1881,7 +1860,8 @@ public class RequestorMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket iD: ", false);
         try {
             Ticket t = requestor.getTicket(ticketId);
-            t.checkTransition("CLOSED");
+            t.requireResolved();
+            t.requireNotDeleted();
             if(confirm("Are you sure you want to Close ticket " + t.getTicketId() + "?")) {
                 String reason = readLine("Please provide a reason for Closing: ", false);
                 requestor.closeTicket(ticketId, reason);
@@ -1993,7 +1973,7 @@ public class SupportAgentMenu extends BaseMenu {
             ticket.requireNotFinished();
             String oldState = ticket.getState();
             String newState = readAgentState();
-            ticket.checkTransition(newState);
+            ticket.checkWorkFlowMoves(newState);
             if (confirm("Change ticket state from " + oldState + " to " + newState + "?")) {
                 String reason = readLine("Enter a reason: ", false);
                 supportAgent.updateTicketState(ticketId, newState, reason);

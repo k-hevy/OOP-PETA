@@ -1,9 +1,7 @@
 package presentationlayer;
 
 import datalayer.Repository;
-import entitylayer.Ticket;
 import entitylayer.User;
-import java.util.ArrayList;
 import java.util.Scanner;
 
 public class LoginMenu extends BaseMenu {
@@ -65,10 +63,6 @@ public class LoginMenu extends BaseMenu {
 
     public User getAuthenticatedUser() {
         return authenticatedUser;
-    }
-
-    @Override
-    protected void displayTickets(ArrayList<Ticket> tickets) {
     }
 
 }

@@ -16,7 +16,7 @@ public class Requestor extends User {
             throw new IllegalArgumentException("Ticket " + ticketId +" was not found."); 
         } // Throw an error if you try to acces a ticket that doesnt exist
         if (!ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId())) { 
-            throw new SecurityException("You can only view your own tickets."); 
+            throw new SecurityException("Ticket " + ticketId + " is not yours."); 
         } // Throw an Error if you try to access a ticket that isnt your
         return ticket;  
     } // throws an exception if invalid Ticket ID / if you do not own ticket

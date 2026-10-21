@@ -17,8 +17,6 @@ public abstract class BaseMenu {
     protected Repository repository;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final int WIDTH = 60;
-
-    public static String LINE = "======================================";
     
 
     protected BaseMenu(User user, Scanner input, Repository repository) {
@@ -53,7 +51,7 @@ public abstract class BaseMenu {
         System.out.printf("%-13s : %s%n", "State", t.getState());
         System.out.printf("%-13s : %s%n", "Requestor", requestorName);
         System.out.printf("%-13s : %s%n", "Agent", agentName);
-        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmittedFormatted());
+        System.out.printf("%-13s : %s%n", "Submitted", formatDate(t.getDateSubmitted()));
         System.out.printf("%-13s : %s%n", "Description", t.getDescription());
         System.out.println();
     
@@ -65,7 +63,7 @@ public abstract class BaseMenu {
 
         printField("History", String.valueOf(t.getTicketLogEntries().size()));
         for (TicketLogEntry log : t.getTicketLogEntries()) {
-            System.out.printf("[%s] %-30s | %s%n", formatDate(log.getTimestamp()), (log.getPreviousState() + " -> " + log.getNewState()),  log.getReason() );
+            System.out.printf("[%s] %-30s | %s: %s%n", formatDate(log.getTimestamp()), (log.getPreviousState() + " -> " + log.getNewState()), log.getChangedByUserName(), log.getReason() );
         }
         System.out.println();
         printDivider();
@@ -246,7 +244,7 @@ public abstract class BaseMenu {
                 switch (choice) {
                     case 1 -> { return "Campus Wi-Fi Disconnect"; }
                     case 2 -> { return "Ethernet / Wired Port "; }
-                    case 3 -> { return "VPN Connection "; }
+                    case 3 -> { return "VPN Connection"; }
                     case 4 -> { return "Slow Internet Speed"; }
                     case 5 -> { return readLine("Enter Subject: ", false); }
                 }

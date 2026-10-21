@@ -33,7 +33,7 @@ public class SupportAgent extends User {
             throw new IllegalArgumentException("Ticket " + ticketId + " was not found.");
         } // Throw an error if the ticket doesnt exist
         if (ticket.getAssignedAgent() == null || !ticket.getAssignedAgent().getUserId().equalsIgnoreCase(getUserId()) ) { 
-           throw new SecurityException("You can only view tickets assigned to you.");
+           throw new SecurityException("Ticket " + ticketId + " is not assigned to you.");
         } // Throw an error if the tickett isnt assigend to you
         return ticket; 
     } // Gets an existing Ticket that is assigned to you

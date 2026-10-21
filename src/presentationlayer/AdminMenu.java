@@ -2,12 +2,10 @@ package presentationlayer;
 
 import datalayer.Repository;
 import entitylayer.Admin;
-import entitylayer.Comment;
 import entitylayer.Faculty;
 import entitylayer.Student;
 import entitylayer.SupportAgent;
 import entitylayer.Ticket;
-import entitylayer.TicketLogEntry;
 import entitylayer.User;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -155,7 +153,7 @@ public class AdminMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = admin.getTicket(ticketId);
-            viewTicketDetails(ticket);
+            displayTicket(ticket);
         } catch (IllegalArgumentException e) {
             printError(e.getMessage());
         }
@@ -169,6 +167,7 @@ public class AdminMenu extends BaseMenu {
             Ticket ticket = admin.getTicket(ticketId);
             ticket.requireActive();
             String agentId = readLine("Enter SupportAgent Id: ", false);
+            ticket.checkReassign(admin.getUser(agentId));
             if (confirm("Reassign Ticket " + ticket.getTicketId() + " to agent " + agentId + "?")) {
                 String reason = readLine("Provide a reason for reassignment: ", false);
                 admin.reassignTicket(ticketId, agentId, reason);
@@ -187,7 +186,7 @@ public class AdminMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = admin.getTicket(ticketId);
-            ticket.requireNotDeleted();
+            ticket.requireNotFinished();
             if (confirm("Delete Ticket " + ticket.getTicketId() + "?")) {
                 String reason = readLine("Provide a reason for Deletion: ", false);
                 admin.deleteTicket(ticketId, reason);
@@ -222,41 +221,6 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
-    private void viewTicketDetails(Ticket t) {
-
-        System.out.println();
-        String requestorName = (t.getSubmittedBy() != null) ? t.getSubmittedBy().getFullName() : "Unknown";
-        String agentName = (t.getAssignedAgent() != null) ? t.getAssignedAgent().getFullName() : "Unassigned";
-
-        System.out.println("===== TICKET " + t.getTicketId() + " =====");
-        System.out.printf("%-13s : %s%n", "Requestor", requestorName);
-        System.out.printf("%-13s : %s%n", "Agent", agentName);
-        System.out.printf("%-13s : %s%n", "Category", t.getCategory());
-        System.out.printf("%-13s : %s%n", "Subject", t.getSubject());
-        System.out.printf("%-13s : %s%n", "Priority", t.getPriority());
-        System.out.printf("%-13s : %s%n", "State", t.getState());
-        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmittedFormatted());
-        System.out.printf("%-13s : %s%n", "Description", t.getDescription());
-        System.out.println();
-
-        System.out.println("--- Comments (" + t.getComments().size() + ") ---");
-        for (Comment c : t.getComments()) {
-            System.out.printf("[%s] %-20s : %s%n", formatDate(c.getTimestamp()), c.getAuthorName(), c.getMessage());
-        }
-        System.out.println();
-
-        System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
-        for (TicketLogEntry log : t.getTicketLogEntries()) {
-            System.out.printf("[%s] %-30s by %-12s | %s%n",
-                formatDate(log.getTimestamp()),
-                log.getPreviousState() + " -> " + log.getNewState(),
-                log.getChangedByUserName(),
-                log.getReason()
-            );
-        }
-        System.out.println(LINE);
-    }
-
     private void viewUserDetails(User user) {
 
         System.out.println();
@@ -288,7 +252,7 @@ public class AdminMenu extends BaseMenu {
 
         if (user instanceof Admin adminUser) {
             System.out.printf("%-16s : %s%n", "EmployeeId", adminUser.getEmployeeId());
-            System.out.printf("%-16s : %s%n", "Specialization", adminUser.getManagedDepartment());
+            System.out.printf("%-16s : %s%n", "Managed Department", adminUser.getManagedDepartment());
             System.out.printf("%-16s : %s%n", "Desk-Extension", adminUser.getDeskExtension());
         }
 

@@ -112,7 +112,7 @@ public class SupportAgentMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = supportAgent.getTicket(ticketId);
-            ticket.requireNotFinished();
+            ticket.requireActive();
             String oldPriority = ticket.getPriority();
             String newPriority = readPriority();
             if (confirm("Change ticket priority from " + oldPriority + " to " + newPriority + "?")) {
