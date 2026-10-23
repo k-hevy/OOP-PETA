@@ -6,12 +6,18 @@ import java.util.Scanner;
 
 public class LoginMenu extends BaseMenu {
 
-    User authenticatedUser;
+    // It handles the login process and allows the user to enter their user ID and password, verifies their credential, 
+    // and identifies the authenticated user before they access the appropriate menu. 
+    // Throws early for user experience
 
+    private User authenticatedUser;
+
+    // Constructs a LoginMenu instance
     public LoginMenu(Scanner input, Repository repository) {
         super(null, input, repository);
     }
 
+    // Displays the login menu options
     @Override
     protected void displayMenu() {
         printHeader("SYSTEM LOGIN");
@@ -19,6 +25,7 @@ public class LoginMenu extends BaseMenu {
         System.out.println("[0] EXIT");
     }
 
+    // Executes the selected login menu choice
     @Override
     protected void executeChoice(int choice) {
         switch (choice) {
@@ -31,16 +38,19 @@ public class LoginMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Returns minimum menu choice
     @Override
     protected int getMinChoice() {
         return 0;
     }
 
+    // Returns maximum menu choice
     @Override
     protected int getMaxChoice() {
         return 1;
     }
 
+    // Handles user credential input and authentication
     private void handleLogin() {
 
         printHeader("Please Enter Credentials");
@@ -61,6 +71,7 @@ public class LoginMenu extends BaseMenu {
 
     }
 
+    // Returns the successfully authenticated user
     public User getAuthenticatedUser() {
         return authenticatedUser;
     }

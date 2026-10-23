@@ -357,24 +357,23 @@ import java.time.LocalDateTime;
 public class Comment {
 
     private final String commentId;
-    private final User user;
+    private final User author;
     private final String message;
     private final LocalDateTime timestamp;
     private static int commentCounter = 0;
 
-    public Comment(User user, String message) {
+    public Comment(User author, String message) {
         this.commentId = generateCommentId();
-        this.user = user;
+        this.author = author;
         this.message = message;
         this.timestamp = LocalDateTime.now();
     }
 
     public String getCommentId() {return commentId; } 
-    public User getAuthor() {return user;}
-    public String getAuthorName() { return user.getFullName(); }
+    public User getAuthor() {return author;}
+    public String getAuthorName() { return author.getFullName(); }
     public String getMessage() {return message;}
     public LocalDateTime getTimestamp() { return timestamp;}
-    public String getTime() { return getTimestamp().format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm")); }
 
     private String generateCommentId() {
         commentCounter++;
@@ -438,7 +437,7 @@ public class Requestor extends User {
             throw new IllegalArgumentException("Ticket " + ticketId +" was not found."); 
         } // Throw an error if you try to acces a ticket that doesnt exist
         if (!ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId())) { 
-            throw new SecurityException("You can only view your own tickets."); 
+            throw new SecurityException("Ticket " + ticketId + " is not yours."); 
         } // Throw an Error if you try to access a ticket that isnt your
         return ticket;  
     } // throws an exception if invalid Ticket ID / if you do not own ticket
@@ -460,7 +459,7 @@ public class Requestor extends User {
     } // Create a ticket 
     
     public void submitTicket(Ticket ticket) {
-        autoAssignAgent(ticket); // tickets stays unassigned if no agent matches
+        ticket.autoAssignAgent(getRepository().getAllUsers());
         getRepository().addTicket(ticket);
      } // after creating a ticket auto assign to agent and store in the repo
      
@@ -485,31 +484,7 @@ public class Requestor extends User {
         ticket.closeTicket(this, reason);
     } // Close aticket that is resolved
 
-    private void autoAssignAgent(Ticket ticket) {
-
-        ArrayList<User> users = getRepository().getAllUsers();
-
-        SupportAgent bestAgent = null;
-        int fewestActiveTickets = Integer.MAX_VALUE;
-
-        for (User user : users) {
-            if (!(user instanceof SupportAgent agent)) { continue; } // User must be a supportAgent
-            if (!agent.getSpecialization().equalsIgnoreCase(ticket.getCategory())) { continue; } // SupportAgent specializaiton must be thhe same as ticket category
-            
-            int activeCount = agent.getActiveTickets().size();
-            if (activeCount < fewestActiveTickets) {
-                fewestActiveTickets = activeCount;
-                bestAgent = agent;
-            } // Pick the agent with fewest active tickets that specialization matchhes the category of the ticket 
-        }
-
-        if (bestAgent != null) { 
-            ticket.setAssignedAgent(bestAgent);
-        } // if there is a best agent assign the ticket
-
-        // do nothing if there isnt an agent available
-
-    } // Picks the best agent for the job
+    
 
 }
 <<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/Requestor.java"
@@ -584,7 +559,7 @@ public class SupportAgent extends User {
             throw new IllegalArgumentException("Ticket " + ticketId + " was not found.");
         } // Throw an error if the ticket doesnt exist
         if (ticket.getAssignedAgent() == null || !ticket.getAssignedAgent().getUserId().equalsIgnoreCase(getUserId()) ) { 
-           throw new SecurityException("You can only view tickets assigned to you.");
+           throw new SecurityException("Ticket " + ticketId + " is not assigned to you.");
         } // Throw an error if the tickett isnt assigend to you
         return ticket; 
     } // Gets an existing Ticket that is assigned to you
@@ -712,7 +687,6 @@ public class Ticket {
         checkReassign(user);
         SupportAgent newAgent = (SupportAgent) user;
         String oldAgentName = (assignedAgent != null) ? getAssignedAgent().getFullName() : "Unassigned"; // if the there is a currently assigned agent get their name else put Unassigned
-        assignedAgent = newAgent;
         setAssignedAgent(newAgent); // Set assigned Agent
         log(oldAgentName, newAgent.getFullName(), changedBy, reason); // Create a ticket log if successful
     } // Used by Admin. Reassign a active ticket to a different agent with the same specialization
@@ -839,10 +813,6 @@ public class TicketLogEntry {
         return String.format("LG-%03d", ticketLogEntryCounter);
     } // called whenever a new log is created
 
-    public String getTime() {
-        return getTimestamp().format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm"));
-    }
-
 }
 
 <<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/TicketLogEntry.java"
@@ -915,12 +885,10 @@ package presentationlayer;
 
 import datalayer.Repository;
 import entitylayer.Admin;
-import entitylayer.Comment;
 import entitylayer.Faculty;
 import entitylayer.Student;
 import entitylayer.SupportAgent;
 import entitylayer.Ticket;
-import entitylayer.TicketLogEntry;
 import entitylayer.User;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -1068,7 +1036,7 @@ public class AdminMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = admin.getTicket(ticketId);
-            viewTicketDetails(ticket);
+            displayTicket(ticket);
         } catch (IllegalArgumentException e) {
             printError(e.getMessage());
         }
@@ -1082,6 +1050,7 @@ public class AdminMenu extends BaseMenu {
             Ticket ticket = admin.getTicket(ticketId);
             ticket.requireActive();
             String agentId = readLine("Enter SupportAgent Id: ", false);
+            ticket.checkReassign(admin.getUser(agentId));
             if (confirm("Reassign Ticket " + ticket.getTicketId() + " to agent " + agentId + "?")) {
                 String reason = readLine("Provide a reason for reassignment: ", false);
                 admin.reassignTicket(ticketId, agentId, reason);
@@ -1100,7 +1069,7 @@ public class AdminMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = admin.getTicket(ticketId);
-            ticket.requireNotDeleted();
+            ticket.requireNotFinished();
             if (confirm("Delete Ticket " + ticket.getTicketId() + "?")) {
                 String reason = readLine("Provide a reason for Deletion: ", false);
                 admin.deleteTicket(ticketId, reason);
@@ -1135,41 +1104,6 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
-    private void viewTicketDetails(Ticket t) {
-
-        System.out.println();
-        String requestorName = (t.getSubmittedBy() != null) ? t.getSubmittedBy().getFullName() : "Unknown";
-        String agentName = (t.getAssignedAgent() != null) ? t.getAssignedAgent().getFullName() : "Unassigned";
-
-        System.out.println("===== TICKET " + t.getTicketId() + " =====");
-        System.out.printf("%-13s : %s%n", "Requestor", requestorName);
-        System.out.printf("%-13s : %s%n", "Agent", agentName);
-        System.out.printf("%-13s : %s%n", "Category", t.getCategory());
-        System.out.printf("%-13s : %s%n", "Subject", t.getSubject());
-        System.out.printf("%-13s : %s%n", "Priority", t.getPriority());
-        System.out.printf("%-13s : %s%n", "State", t.getState());
-        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmittedFormatted());
-        System.out.printf("%-13s : %s%n", "Description", t.getDescription());
-        System.out.println();
-
-        System.out.println("--- Comments (" + t.getComments().size() + ") ---");
-        for (Comment c : t.getComments()) {
-            System.out.printf("[%s] %-20s : %s%n", formatDate(c.getTimestamp()), c.getAuthorName(), c.getMessage());
-        }
-        System.out.println();
-
-        System.out.println("--- History (" + t.getTicketLogEntries().size() + ") ---");
-        for (TicketLogEntry log : t.getTicketLogEntries()) {
-            System.out.printf("[%s] %-30s by %-12s | %s%n",
-                formatDate(log.getTimestamp()),
-                log.getPreviousState() + " -> " + log.getNewState(),
-                log.getChangedByUserName(),
-                log.getReason()
-            );
-        }
-        System.out.println(LINE);
-    }
-
     private void viewUserDetails(User user) {
 
         System.out.println();
@@ -1201,7 +1135,7 @@ public class AdminMenu extends BaseMenu {
 
         if (user instanceof Admin adminUser) {
             System.out.printf("%-16s : %s%n", "EmployeeId", adminUser.getEmployeeId());
-            System.out.printf("%-16s : %s%n", "Specialization", adminUser.getManagedDepartment());
+            System.out.printf("%-16s : %s%n", "Managed Department", adminUser.getManagedDepartment());
             System.out.printf("%-16s : %s%n", "Desk-Extension", adminUser.getDeskExtension());
         }
 
@@ -1253,8 +1187,6 @@ public abstract class BaseMenu {
     protected Repository repository;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final int WIDTH = 60;
-
-    public static String LINE = "======================================";
     
 
     protected BaseMenu(User user, Scanner input, Repository repository) {
@@ -1289,7 +1221,7 @@ public abstract class BaseMenu {
         System.out.printf("%-13s : %s%n", "State", t.getState());
         System.out.printf("%-13s : %s%n", "Requestor", requestorName);
         System.out.printf("%-13s : %s%n", "Agent", agentName);
-        System.out.printf("%-13s : %s%n", "Submitted", t.getDateSubmittedFormatted());
+        System.out.printf("%-13s : %s%n", "Submitted", formatDate(t.getDateSubmitted()));
         System.out.printf("%-13s : %s%n", "Description", t.getDescription());
         System.out.println();
     
@@ -1301,7 +1233,7 @@ public abstract class BaseMenu {
 
         printField("History", String.valueOf(t.getTicketLogEntries().size()));
         for (TicketLogEntry log : t.getTicketLogEntries()) {
-            System.out.printf("[%s] %-30s | %s%n", formatDate(log.getTimestamp()), (log.getPreviousState() + " -> " + log.getNewState()),  log.getReason() );
+            System.out.printf("[%s] %-30s | %s: %s%n", formatDate(log.getTimestamp()), (log.getPreviousState() + " -> " + log.getNewState()), log.getChangedByUserName(), log.getReason() );
         }
         System.out.println();
         printDivider();
@@ -1482,7 +1414,7 @@ public abstract class BaseMenu {
                 switch (choice) {
                     case 1 -> { return "Campus Wi-Fi Disconnect"; }
                     case 2 -> { return "Ethernet / Wired Port "; }
-                    case 3 -> { return "VPN Connection "; }
+                    case 3 -> { return "VPN Connection"; }
                     case 4 -> { return "Slow Internet Speed"; }
                     case 5 -> { return readLine("Enter Subject: ", false); }
                 }
@@ -1602,9 +1534,7 @@ public abstract class BaseMenu {
 package presentationlayer;
 
 import datalayer.Repository;
-import entitylayer.Ticket;
 import entitylayer.User;
-import java.util.ArrayList;
 import java.util.Scanner;
 
 public class LoginMenu extends BaseMenu {
@@ -1666,10 +1596,6 @@ public class LoginMenu extends BaseMenu {
 
     public User getAuthenticatedUser() {
         return authenticatedUser;
-    }
-
-    @Override
-    protected void displayTickets(ArrayList<Ticket> tickets) {
     }
 
 }
@@ -1992,7 +1918,7 @@ public class SupportAgentMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = supportAgent.getTicket(ticketId);
-            ticket.requireNotFinished();
+            ticket.requireActive();
             String oldPriority = ticket.getPriority();
             String newPriority = readPriority();
             if (confirm("Change ticket priority from " + oldPriority + " to " + newPriority + "?")) {

@@ -14,13 +14,20 @@ import java.util.Scanner;
 
 public class AdminMenu extends BaseMenu {
 
+    // It provides the menu and interface for administrators in Campus Help Desk Ticketing System. 
+    // It also allows the admin to manage users, filter and view tickets, reassign tickets to support agents, delete tickets, and generate summary reports.
+    // Throws early for user experience
+    // Uses try-catchs and confirmation for actions
+
     private final Admin admin;
 
+    // Constructs an AdminMenu instance
     public AdminMenu(Admin admin, Scanner input, Repository repository) {
         super(admin, input, repository);
         this.admin = admin;
     }
 
+    // Displays the admin menu options
     @Override
     protected void displayMenu() {
         printHeader("ADMIN MENU");
@@ -34,6 +41,7 @@ public class AdminMenu extends BaseMenu {
         System.out.println("[0] Logout");
     }
 
+    // Executes the selected admin menu choice
     @Override
     protected void executeChoice(int choice) {
         switch(choice) {
@@ -48,16 +56,19 @@ public class AdminMenu extends BaseMenu {
         }
     }
 
-     @Override
+    // Returns the minimum valid menu choice
+    @Override
     protected int getMinChoice() {
         return 0;
     }
 
+    // Returns the maximum valid menu choice
     @Override
     protected int getMaxChoice() {
         return 7;
     }
 
+    // Handles viewing and filtering all system users
     public void viewAllUsers() {
         while (true) {
             printHeader("View All Users");
@@ -93,6 +104,7 @@ public class AdminMenu extends BaseMenu {
         }
     }
 
+    // Handles viewing detailed information for a specific user
     public void viewUserDetails() {
         printHeader("View User Details");
         String userId = readLine("Enter User ID: ", false);
@@ -105,6 +117,7 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles viewing and filtering all system tickets
     public void viewAllTickets() {
         while (true) {
             printHeader("View All Tickets");
@@ -148,6 +161,7 @@ public class AdminMenu extends BaseMenu {
         }
     }
 
+    // Handles viewing detailed information for a specific ticket
     public void viewTicketDetails() {
         printHeader("View Ticket Details");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -160,6 +174,7 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles reassigning a ticket to another agent[cite: 1]
     public void reassignTicket() {
         printHeader("Reassign a Ticket");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -181,6 +196,7 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles deleting a ticket
     public void deleteTicket() {
         printHeader("Delete a Ticket");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -200,6 +216,7 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Generates and displays a summary report of system statistics
     public void generateSummaryReport() {
         printHeader("Summary Report");
         LinkedHashMap<String, Integer> counts = admin.getSummaryCounts();
@@ -221,6 +238,7 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Displays formatted details of a specific user
     private void viewUserDetails(User user) {
 
         System.out.println();
@@ -243,7 +261,6 @@ public class AdminMenu extends BaseMenu {
             System.out.printf("%-16s : %s%n", "Desk-Extension", faculty.getDeskExtension());
         }
 
-
         if (user instanceof SupportAgent supportAgent) {
             System.out.printf("%-16s : %s%n", "EmployeeId", supportAgent.getEmployeeId());
             System.out.printf("%-16s : %s%n", "Specialization", supportAgent.getSpecialization());
@@ -259,6 +276,7 @@ public class AdminMenu extends BaseMenu {
 
     }
 
+    // Displays a tabular list of users
     private void displayUsers(ArrayList<User> users) {
         if (users.isEmpty()) {
             printError("No users found.");

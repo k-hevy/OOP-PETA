@@ -5,10 +5,15 @@ import java.util.ArrayList;
 
 public class Requestor extends User {
 
+    // It represents users who submit help desk tickets, such as students and faculty members. Requestors can only access their own tickets. 
+    // Has the capability to create, submit, delete, reopen, close and add Comments on tickets. 
+
+    // Constructs a Requestor instance
     public Requestor(String userId, String firstName, String lastName, String email, String password, Repository repository) {
         super("REQUESTOR",userId, firstName, lastName, email, password, repository);
     }
 
+    // Accepts a ticket id and finds it. throws an exception if invalid Ticket ID / if you do not own ticket
     @Override
     public Ticket getTicket(String ticketId) {
         Ticket ticket = getRepository().findTicketById(ticketId);
@@ -19,8 +24,9 @@ public class Requestor extends User {
             throw new SecurityException("Ticket " + ticketId + " is not yours."); 
         } // Throw an Error if you try to access a ticket that isnt your
         return ticket;  
-    } // throws an exception if invalid Ticket ID / if you do not own ticket
+    } 
 
+    // Returns all tickets submitted by the requestor except Deleted ones
     @Override
     public ArrayList<Ticket> getTickets() {
        ArrayList<Ticket> myTickets = new ArrayList<>();
@@ -31,62 +37,44 @@ public class Requestor extends User {
                 }
             }
         return myTickets;
-    } // Returns all tickets submitted by the requestor except Deleted ones
+    } 
 
+    // Receives a priority, category, subject and description and Create a tickets then returns it.
     public Ticket createTicket(String priority, String category, String subject, String description) {
         return new Ticket(this, null, priority, category, subject, description);
-    } // Create a ticket 
+    } 
     
+    // after creating a ticket it calls ticket methods to auto-assign to agent and store in the repository
     public void submitTicket(Ticket ticket) {
-        autoAssignAgent(ticket); // tickets stays unassigned if no agent matches
+        ticket.autoAssignAgent(getRepository().getAllUsers());
         getRepository().addTicket(ticket);
-     } // after creating a ticket auto assign to agent and store in the repo
+     } 
      
+    // Receives a ticketID and reason, find the ticket. Only allows deletion if a ticket if it is OPEN - IN-PROGRESS then calls ticket methods
     public void deleteTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
         ticket.requireActive(); // The ticket should be OPEN / IN_PROGRESS
         ticket.deleteTicket(this, reason); 
-     } // Deletes a ticket if it is OPEN - IN-PROGRESS
+     } 
      
+    // Receives a ticketID and reason, find the ticket. Reopens a ticket only if its RESOLVED
     public void reopenTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
         ticket.reopenTicket(this, reason);
-    } // Reopens a ticket only if its RESOLVED
+    } 
      
+    // Receives a ticketID and reason, find the ticket. Adds a comment to the specified ticket
     public void addComment(String ticketId, String message) {
         Ticket ticket = getTicket(ticketId);
         ticket.addComment(new Comment(this, message));
     }
 
+    // Receives a ticketID and reason, find the ticket. Close a ticket that is resolved and
     public void closeTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
         ticket.closeTicket(this, reason);
     } // Close aticket that is resolved
 
-    private void autoAssignAgent(Ticket ticket) {
-
-        ArrayList<User> users = getRepository().getAllUsers();
-
-        SupportAgent bestAgent = null;
-        int fewestActiveTickets = Integer.MAX_VALUE;
-
-        for (User user : users) {
-            if (!(user instanceof SupportAgent agent)) { continue; } // User must be a supportAgent
-            if (!agent.getSpecialization().equalsIgnoreCase(ticket.getCategory())) { continue; } // SupportAgent specializaiton must be thhe same as ticket category
-            
-            int activeCount = agent.getActiveTickets().size();
-            if (activeCount < fewestActiveTickets) {
-                fewestActiveTickets = activeCount;
-                bestAgent = agent;
-            } // Pick the agent with fewest active tickets that specialization matchhes the category of the ticket 
-        }
-
-        if (bestAgent != null) { 
-            ticket.setAssignedAgent(bestAgent);
-        } // if there is a best agent assign the ticket
-
-        // do nothing if there isnt an agent available
-
-    } // Picks the best agent for the job
+    
 
 }

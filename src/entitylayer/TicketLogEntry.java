@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 
 public class TicketLogEntry {
 
+    // It records changes made to a help desk ticket. It stores the previous state, new user, 
+    // user who made the change, timestamp and reason. This helps track the activities performed on a ticket.
+    
     private final String ticketLogEntryId;
     private final String previousState;
     private final String newState;
@@ -13,6 +16,7 @@ public class TicketLogEntry {
     private final String reason;
     private static int ticketLogEntryCounter = 0;
 
+    // Constructs a new TicketLogEntry instance
     public TicketLogEntry(String previousState, String newState, String changedByUserId, String changedByUserName, String reason) {
         this.ticketLogEntryId = generateTicketLogEntryId();
         this.previousState = previousState;
@@ -31,6 +35,7 @@ public class TicketLogEntry {
     public LocalDateTime getTimestamp() { return timestamp; }
     public String getReason() { return reason; }
 
+    // called whenever a new log is created
     private String generateTicketLogEntryId() {
         ticketLogEntryCounter++;
         return String.format("LG-%03d", ticketLogEntryCounter);

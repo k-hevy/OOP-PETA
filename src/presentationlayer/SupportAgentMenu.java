@@ -8,13 +8,20 @@ import java.util.Scanner;
 
 public class SupportAgentMenu extends BaseMenu {
 
+    // It provides the menu for support agents, it allows them to view their assigned tickets, 
+    // check ticket details, update ticket status and priority, and add comments.
+    // Throws early for user experience
+    // Uses try-catchs and confirmation for actions
+    
     private final SupportAgent supportAgent;
 
+    // Constructs a SupportAgentMenu instance
     public SupportAgentMenu(SupportAgent supportAgent, Scanner input, Repository repository) {
         super(supportAgent, input, repository);
         this.supportAgent = supportAgent;
     }
 
+    // Displays the support agent menu options
     @Override
     protected void displayMenu() {
         printHeader("SUPPORTAGENT MENU");
@@ -26,16 +33,19 @@ public class SupportAgentMenu extends BaseMenu {
         System.out.println("[0] Logout");
     }
 
+    // Returns minimum menu choice
     @Override
     protected int getMinChoice() {
         return 0;
     }
 
+    // Returns maximum menu choice
     @Override
     protected int getMaxChoice() {
         return 5;
     }
 
+    // Executes the selected support agent menu choice[cite: 1]
     @Override
     protected void executeChoice(int choice) {
         switch (choice) {
@@ -48,6 +58,7 @@ public class SupportAgentMenu extends BaseMenu {
         }
     }
 
+    // Handles viewing assigned tickets
     public void viewAssignedTickets() {
         while (true) {
             ArrayList<Ticket> tickets = supportAgent.getTickets();
@@ -73,6 +84,7 @@ public class SupportAgentMenu extends BaseMenu {
         }
     }
 
+    // Handles viewing detailed information for a specific ticket
     public void viewTicketDetails() {
         printHeader("View Ticket Details");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -85,6 +97,7 @@ public class SupportAgentMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles updating a ticket's state 
     public void updateTicketState() {
         printHeader("Update Ticket Status");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -107,6 +120,7 @@ public class SupportAgentMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles updating a ticket's priority 
     public void updateTicketPriority() {
         printHeader("Update Ticket Priority");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -128,6 +142,7 @@ public class SupportAgentMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles adding a comment to an assigned ticket
     public void addComment() {
         printHeader("Add Comment");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -143,6 +158,7 @@ public class SupportAgentMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Prompts the agent to select an allowed ticket state transition
     private String readAgentState() { 
         while(true) {
             System.out.println("");

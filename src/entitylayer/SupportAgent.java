@@ -5,10 +5,14 @@ import java.util.ArrayList;
 
 public class SupportAgent extends User {
 
+    // Represents the help desk personnel responsible for handling and resolving campus-related tickets. 
+    // It extends the User class and provides methods to view assigned tickets, update ticket statuses and priorities, and add comments.
+
     private String employeeId;
     private String specialization;
     private String deskExtension;
 
+    // Constructs a SupportAgent instance with specialization and extension details
     public SupportAgent(String userId, String firstName, String lastName, String email, String password, Repository repository, String employeeId, String specialization, String deskExtension) {
         super("SUPPORT_AGENT", userId, firstName, lastName, email, password, repository);
         this.employeeId = employeeId;
@@ -26,6 +30,7 @@ public class SupportAgent extends User {
     public void setSpecialization(String specialization) { this.specialization = specialization; }
     public void setDeskExtension(String deskExtension) { this.deskExtension = deskExtension; }
 
+    // Gets an existing Ticket that is assigned to you throws an error is it does not exist or does not belong to you
     @Override
     public Ticket getTicket(String ticketId) {
         Ticket ticket = getRepository().findTicketById(ticketId);
@@ -36,8 +41,9 @@ public class SupportAgent extends User {
            throw new SecurityException("Ticket " + ticketId + " is not assigned to you.");
         } // Throw an error if the tickett isnt assigend to you
         return ticket; 
-    } // Gets an existing Ticket that is assigned to you
+    }
 
+    // Gets all assigned tickets that arent deleted
     @Override
     public ArrayList<Ticket> getTickets() {
         ArrayList<Ticket> assignedTickets = new ArrayList<>();
@@ -47,21 +53,24 @@ public class SupportAgent extends User {
             } // Get all tickets that assignedAgent ID matches mine that are also not deleted
         }
         return assignedTickets;
-    } // Gets all assigned tickets that arent deleted
+    } 
 
+    // Receives a ticketID and reason, find the ticket. Adds a comment to an assigned ticket. calls ticket method
     public void addComment(String ticketId, String message) {
         Ticket ticket = getTicket(ticketId);
         ticket.addComment(new Comment(this, message));
     }
 
+    // Receives a ticketID and reason, find the ticket. Updates a ticket state Form picking From OPEN / IN PROGRESS / RESOLVED. Calls ticket methods
     public void updateTicketState(String ticketId, String newState, String reason) {
         Ticket ticket = getTicket(ticketId);
         ticket.updateTicketState(newState, this, reason);
-    } // Updates a ticket state Form picking From OPEN / IN PROGRESS / RESOLVED
+    } 
 
+    // Receives a ticketID and reason and newPriority, find the ticket. Updates a ticket priority. calls ticket method to update
     public void updatePriority(String ticketId, String newPriority, String reason) {
         Ticket ticket = getTicket(ticketId);
         ticket.changePriority(newPriority, this, reason);
-    } // Updates aticket priority by picking from the 4. doesnt allow to assign the same priority
+    } 
 
 }

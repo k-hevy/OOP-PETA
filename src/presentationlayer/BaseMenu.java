@@ -11,6 +11,9 @@ import java.util.Scanner;
 
 public abstract class BaseMenu {
 
+    // Serves as an abstract parent class for the different menu in Campus Help Desk Ticketing System. 
+    // It contains common methods for displaying ticket information, accepting and validating user input, formatting output, and controlling the menu loop. 
+
     protected User user;
     protected Scanner input;
     protected boolean running;
@@ -18,7 +21,7 @@ public abstract class BaseMenu {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final int WIDTH = 60;
     
-
+    // Constructs a BaseMenu instance[cite: 1]
     protected BaseMenu(User user, Scanner input, Repository repository) {
         this.input = input;
         this.user = user;
@@ -26,6 +29,7 @@ public abstract class BaseMenu {
         this.running = true;
     }
 
+    // Main loop running the console menu
     public void run() {
         while (running) {
             System.out.println();
@@ -34,12 +38,14 @@ public abstract class BaseMenu {
             int choice = readInt("Enter your choice: ", getMinChoice(), getMaxChoice()); // prompts the user
             executeChoice(choice); // executes that choice
         }
-    } // Contains Main loop of Menus only
+    } 
 
+    // Stops the menu loop
     public void stop() {
         this.running = false;
     }
 
+    // Displays detailed information for a specific ticket
     protected void displayTicket(Ticket t) {
         String agentName = (t.getAssignedAgent() != null) ? t.getAssignedAgent().getFullName() : "Unassigned";
         String requestorName = (t.getSubmittedBy() != null) ? t.getSubmittedBy().getFullName() + " (" + t.getSubmittedBy().getRole() + ")" : "Unknown";
@@ -55,13 +61,13 @@ public abstract class BaseMenu {
         System.out.printf("%-13s : %s%n", "Description", t.getDescription());
         System.out.println();
     
-        printField("Comments", String.valueOf(t.getComments().size()));
+        System.out.printf("%-13s : %s%n", "Comments", t.getComments().size());
         for (Comment c : t.getComments()) {
             System.out.printf("[%s] %-30s | %s%n", formatDate(c.getTimestamp()), c.getAuthorName(), c.getMessage());
         }
         System.out.println();
 
-        printField("History", String.valueOf(t.getTicketLogEntries().size()));
+        System.out.printf("%-13s : %s%n", "History", t.getTicketLogEntries().size());
         for (TicketLogEntry log : t.getTicketLogEntries()) {
             System.out.printf("[%s] %-30s | %s: %s%n", formatDate(log.getTimestamp()), (log.getPreviousState() + " -> " + log.getNewState()), log.getChangedByUserName(), log.getReason() );
         }
@@ -69,6 +75,7 @@ public abstract class BaseMenu {
         printDivider();
     }
 
+    // Displays a tabular list of tickets
     protected void displayTickets(ArrayList<Ticket> tickets) {
        if (tickets.isEmpty()) {
             printError("No tickets found.");
@@ -95,6 +102,7 @@ public abstract class BaseMenu {
         System.out.println();
     }
 
+    // Prompts for and validates an integer input within a range
     protected int readInt(String prompt, int min, int max) {
         while (true) {
             System.out.print(prompt);
@@ -113,6 +121,7 @@ public abstract class BaseMenu {
         }
     }
 
+    // Prompts for and reads a line of text input
     protected String readLine(String prompt, boolean allowBlank) {
         while (true) {
             System.out.print(prompt);
@@ -128,6 +137,7 @@ public abstract class BaseMenu {
         }
     } 
 
+    // Truncates text to fit display limits
     protected String truncate(String text, int maxLength) {
         if (text == null) { return ""; }
         if (text.length() <= maxLength) {return text;}
@@ -135,6 +145,7 @@ public abstract class BaseMenu {
         return text.substring(0, maxLength -3) + "...";
     }
 
+    // Prompts the user for a confirmation
     protected boolean confirm(String prompt) {
         while (true) {
             System.out.print(prompt + " [Y/N]: ");
@@ -153,11 +164,13 @@ public abstract class BaseMenu {
         }
     } // asks a question then returns the choice
 
+    // Pauses execution until the user presses Enter
     protected void waitForEnter() {
         System.out.print("\nPress Enter to proceed: ");
         input.nextLine();
     } 
 
+    // Prompts the user to select a ticket priority
     protected String readPriority() {
         while(true) {
             System.out.println("");
@@ -176,6 +189,7 @@ public abstract class BaseMenu {
         }
     }
 
+    // Prompts the user to select a ticket category
     protected String readCategory() {
         while(true) {
             System.out.println("");
@@ -196,6 +210,7 @@ public abstract class BaseMenu {
         }
     }
 
+    // Prompts the user to select or enter a ticket subject based on category
     protected String readSubject(String category) {
         switch (category) {
             case "FACILITIES_MAINTENANCE" -> {
@@ -287,6 +302,7 @@ public abstract class BaseMenu {
         return readLine("Enter Subject: ", false);
     }
 
+    // Prompts the user to select a ticket state
     protected String readState() { 
         while(true) {
             System.out.println("");
@@ -307,6 +323,7 @@ public abstract class BaseMenu {
         }
     }
 
+    // Prompts the user to select a user role
     protected String readRole() {
         while(true) {
             System.out.println("");
@@ -323,10 +340,12 @@ public abstract class BaseMenu {
         }
     }
 
+    // Prints a line of repeated characters
     protected void printLine(char c) {
         System.out.println(String.valueOf(c).repeat(WIDTH));
     }
 
+    // Prints a formatted header title
     protected void printHeader(String title) {
         System.out.println();
         printLine('=');
@@ -334,28 +353,35 @@ public abstract class BaseMenu {
         printLine('=');
     }
 
+    // Prints a visual divider line
     protected void printDivider() {
         printLine('-');
     }
 
+    // Prints a success message
     protected void printSuccess(String message) {
         System.out.println("[OK] " + message);
     }
  
+    // Prints an error message
     protected void printError(String message) {
         System.out.println("[!] Error: " + message);
     }
 
+    // Prints a labeled field and value
     protected void printField(String label, String value) {
-        System.out.printf("%-14s: %s%n", label, value);
+        System.out.printf("%-25s: %s%n", label, value);
     }
 
+    // Formats a date-time object into a standard string
     protected String formatDate(LocalDateTime dateTime) {
         return dateTime.format(DATE_FORMAT);
     }
-    protected abstract void displayMenu();
-    protected abstract void executeChoice(int choice);
-    protected abstract int getMinChoice();
-    protected abstract int getMaxChoice();
+
+    
+    protected abstract void displayMenu(); // Abstract method to display menu options
+    protected abstract void executeChoice(int choice); // Abstract method to execute a menu choice
+    protected abstract int getMinChoice(); // Abstract method to get minimum choice
+    protected abstract int getMaxChoice(); // // Abstract method to get maximum choice
     
 }

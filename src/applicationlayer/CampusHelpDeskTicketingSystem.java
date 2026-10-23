@@ -17,17 +17,23 @@ import presentationlayer.SupportAgentMenu;
 
 public class CampusHelpDeskTicketingSystem {
 
+    // Serves as the main application class, it is the start of the program. It initializes the repository and scanner, 
+    // creates sample users and tickets, handles log in loop, and opens correct menu based on authenticated user role
+
     private static Repository repository;
     private static Scanner input;
     
+    // Initializes Repository and Scanner, the main entry point of the system.
     public static void main(String[] args) {
         repository = new Repository();
         input = new Scanner(System.in);
         seedData(repository);
         run();
         input.close();
-    } // Initialize Repository and Scanner
+    } // Initialize Repository and Scanner 
 
+    // Executes the main application runtime loop, managing user login, session handling, 
+    // menu launching, and logout sequences.
     public static void run() {
         while(true) {
             LoginMenu loginMenu = new LoginMenu(input, repository);
@@ -35,7 +41,7 @@ public class CampusHelpDeskTicketingSystem {
             User user = loginMenu.getAuthenticatedUser();
             if (user == null ) { break; }
             try {
-                launchMenu(user).run();
+                getMenu(user).run();
             } catch (IllegalStateException e) {
                 System.out.println("Error: " + e.getMessage());
             }
@@ -43,7 +49,13 @@ public class CampusHelpDeskTicketingSystem {
         }
     } // Main Loop of whole System
 
-    public static BaseMenu launchMenu(User user) {
+
+    // Instantiates and returns the appropriate menu view based on the authenticated user's role.
+    // @param user The currently authenticated user.
+    // @return The corresponding BaseMenu implementation for the user's role.
+    // @throws IllegalArgumentException if the provided user is null.
+    // @throws IllegalStateException if no menu mapping exists for the user's role.
+    public static BaseMenu getMenu(User user) {
         
         if (user == null) throw new IllegalArgumentException("User cannot be null");
         if (user instanceof Admin admin)         return new AdminMenu(admin, input, repository);
@@ -52,7 +64,8 @@ public class CampusHelpDeskTicketingSystem {
         throw new IllegalStateException("No menu for " + user.getRole());
 
     }
-
+    
+    // Receives the a Repository, populates the repository with initial mock data including users, support agents, and sample tickets.
     public static void seedData(Repository repo) {
 
         if (repo == null) { return; }

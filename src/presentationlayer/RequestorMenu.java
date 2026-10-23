@@ -7,13 +7,21 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class RequestorMenu extends BaseMenu {
+
+    // It provides the menu for requestors, such as students and faculty, to manage their ticket. 
+    // It allows them to create tickets, view their submitted tickets, add comments, delete active tickets, reopen resolved tickets and close resolved tickets. 
+    // Throws early for user experience
+    // Uses try-catchs and confirmation for actions
+
     private final Requestor requestor;
 
+    // // Constructs a RequestorMenu instance
     public RequestorMenu(Requestor requestor, Scanner input, Repository repository) {
         super(requestor, input, repository);
         this.requestor = requestor;
     }
 
+    // Displays the requestor menu options
     @Override
     protected void displayMenu() {
         printHeader("REQUESTOR MENU");
@@ -27,6 +35,7 @@ public class RequestorMenu extends BaseMenu {
         System.out.println("[0] Logout");
     }
     
+    // Executes the selected requestor menu choice
     @Override
     protected void executeChoice(int choice) {
         switch (choice) {
@@ -41,16 +50,19 @@ public class RequestorMenu extends BaseMenu {
         }
     }
 
+    // Returns minimum menu choice 
     @Override
     protected int getMinChoice() {
         return 0;
     } 
 
+    // Returns maximum menu choice
     @Override
     protected int getMaxChoice() {
         return 7;
     }
 
+    // Handles submitting a new support ticket
     public void createTicket() {
         printHeader("Submit a New Ticket");
 
@@ -78,6 +90,7 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     } 
 
+    // Handles viewing submitted tickets
     public void viewMyTickets() {
         while (true) {
             ArrayList<Ticket> tickets = requestor.getTickets();
@@ -103,6 +116,7 @@ public class RequestorMenu extends BaseMenu {
         }
     }
 
+    // Handles viewing detailed information for a specific ticket
     public void viewTicketDetails() {
         printHeader("View Ticket details ");
 
@@ -116,6 +130,7 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles adding a comment to a ticket
     public void addComment() {
         printHeader("Add comment to Ticket");
         String ticketId = readLine("Enter ticket iD: ", false);
@@ -136,6 +151,7 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles deleting an active ticket
     public void deleteTicket() {
         printHeader("Delete a Ticket");
         
@@ -156,6 +172,7 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles reopening a resolved ticket
     public void reopenTicket() {
         printHeader("Re-open a Ticket");
 
@@ -176,6 +193,7 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     }
     
+    // Handles closing a resolved ticket
     public void closeTicket() {
         printHeader("Close a Ticket");
 
