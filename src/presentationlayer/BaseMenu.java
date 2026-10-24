@@ -69,7 +69,7 @@ public abstract class BaseMenu {
 
         System.out.printf("%-13s : %s%n", "History", t.getTicketLogEntries().size());
         for (TicketLogEntry log : t.getTicketLogEntries()) {
-            System.out.printf("[%s] %-30s | %s: %s%n", formatDate(log.getTimestamp()), (log.getPreviousState() + " -> " + log.getNewState()), log.getChangedByUserName(), log.getReason() );
+            System.out.printf("[%s] %-30s | %s: %s%n", formatDate(log.getTimestamp()), (log.getOldValue() + " -> " + log.getNewValue()), log.getChangedByUserId(), log.getReason() );
         }
         System.out.println();
         printDivider();
@@ -377,8 +377,7 @@ public abstract class BaseMenu {
     protected String formatDate(LocalDateTime dateTime) {
         return dateTime.format(DATE_FORMAT);
     }
-
-    
+   
     protected abstract void displayMenu(); // Abstract method to display menu options
     protected abstract void executeChoice(int choice); // Abstract method to execute a menu choice
     protected abstract int getMinChoice(); // Abstract method to get minimum choice

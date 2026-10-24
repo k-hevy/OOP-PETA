@@ -34,7 +34,7 @@ public class Ticket {
         this.description = description;
         comments = new ArrayList<>();
         ticketLogEntries = new ArrayList<>();
-        ticketLogEntries.add(new TicketLogEntry("OPEN", "OPEN", submittedBy.getUserId(), submittedBy.getFirstName(), "Ticket Created"));
+        ticketLogEntries.add(new TicketLogEntry("OPEN", "OPEN", submittedBy.getUserId(), "Ticket Created"));
     }
     
     // Getters
@@ -219,7 +219,7 @@ public class Ticket {
 
     // Requires an old value and new value the user who made the change and reason. Creates a new ticketLog whenever something changes within a ticket EX: Priority, Agent, or a State change.
     private void log(String from, String to, User by, String reason) {
-        TicketLogEntry log = new TicketLogEntry(from, to, by.getUserId(), by.getFirstName(), reason.trim());
+        TicketLogEntry log = new TicketLogEntry(from, to, by.getUserId(), reason.trim());
         ticketLogEntries.add(log);
     } // Creates a new ticketLog whenever something changes within a ticket EX: Priority, Agent, or a State change
 

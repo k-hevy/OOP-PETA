@@ -54,7 +54,7 @@ public class LoginMenu extends BaseMenu {
     private void handleLogin() {
 
         printHeader("Please Enter Credentials");
-        String userId = readLine("User ID (e.g., REQ-001): ", false);
+        String userId = readLine("User ID (e.g., ACC-001): ", false);
         String userPassword = readLine("Password: ", false);
 
         System.out.println();

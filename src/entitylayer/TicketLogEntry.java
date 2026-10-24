@@ -8,30 +8,27 @@ public class TicketLogEntry {
     // user who made the change, timestamp and reason. This helps track the activities performed on a ticket.
     
     private final String ticketLogEntryId;
-    private final String previousState;
-    private final String newState;
+    private final String oldValue;
+    private final String newValue;
     private final String changedByUserId;
-    private final String changedByUserName;
     private final LocalDateTime timestamp;
     private final String reason;
     private static int ticketLogEntryCounter = 0;
 
     // Constructs a new TicketLogEntry instance
-    public TicketLogEntry(String previousState, String newState, String changedByUserId, String changedByUserName, String reason) {
+    public TicketLogEntry(String oldValue, String newValue, String changedByUserId, String reason) {
         this.ticketLogEntryId = generateTicketLogEntryId();
-        this.previousState = previousState;
-        this.newState = newState;
+        this.oldValue = oldValue;
+        this.newValue = newValue;
         this.changedByUserId = changedByUserId;
-        this.changedByUserName = changedByUserName;
         this.timestamp = LocalDateTime.now();
         this.reason = reason;
     }
 
     public String getTicketLogEntryId() { return ticketLogEntryId; }
-    public String getPreviousState() { return previousState; }
-    public String getNewState() { return newState; }
+    public String getOldValue() { return oldValue; }
+    public String getNewValue() { return newValue; }
     public String getChangedByUserId() { return changedByUserId; }
-    public String getChangedByUserName() { return changedByUserName; }
     public LocalDateTime getTimestamp() { return timestamp; }
     public String getReason() { return reason; }
 
