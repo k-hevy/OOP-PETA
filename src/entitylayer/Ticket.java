@@ -44,7 +44,6 @@ public class Ticket {
     public String getPriority() {return priority;}
     public String getCategory() {return category;}
     public LocalDateTime getDateSubmitted() { return dateSubmitted; }
-    public String getDateSubmittedFormatted() {return dateSubmitted.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));}
     public String getState() {return state;}
     public String getSubject() { return subject; }
     public String getDescription() {return description;}
@@ -118,7 +117,7 @@ public class Ticket {
 
     // Receives the use who made the change and reason. Used by Requestor (can only delete OPEN/ INPROGRESS Tickets) and Admin (Admin can delete a ticket from any state except DELETED)
     public void deleteTicket(User by, String reason) {
-        requireNotFinished();
+        requireNotDeleted();
         move("DELETED", by, reason);
     } 
 

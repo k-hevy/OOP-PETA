@@ -201,7 +201,6 @@ public class RequestorMenu extends BaseMenu {
         try {
             Ticket t = requestor.getTicket(ticketId);
             t.requireResolved();
-            t.requireNotDeleted();
             if(confirm("Are you sure you want to Close ticket " + t.getTicketId() + "?")) {
                 String reason = readLine("Please provide a reason for Closing: ", false);
                 requestor.closeTicket(ticketId, reason);

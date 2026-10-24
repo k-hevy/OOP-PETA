@@ -32,7 +32,6 @@ import entitylayer.Faculty;
 import entitylayer.Requestor;
 import entitylayer.Student;
 import entitylayer.SupportAgent;
-import entitylayer.Ticket;
 import entitylayer.User;
 import java.util.Scanner;
 import presentationlayer.AdminMenu;
@@ -43,17 +42,23 @@ import presentationlayer.SupportAgentMenu;
 
 public class CampusHelpDeskTicketingSystem {
 
+    // Serves as the main application class, it is the start of the program. It initializes the repository and scanner, 
+    // creates sample users and tickets, handles log in loop, and opens correct menu based on authenticated user role
+
     private static Repository repository;
     private static Scanner input;
     
+    // Initializes Repository and Scanner, the main entry point of the system.
     public static void main(String[] args) {
         repository = new Repository();
         input = new Scanner(System.in);
         seedData(repository);
         run();
         input.close();
-    } // Initialize Repository and Scanner
+    } // Initialize Repository and Scanner 
 
+    // Executes the main application runtime loop, managing user login, session handling, 
+    // menu launching, and logout sequences.
     public static void run() {
         while(true) {
             LoginMenu loginMenu = new LoginMenu(input, repository);
@@ -61,7 +66,7 @@ public class CampusHelpDeskTicketingSystem {
             User user = loginMenu.getAuthenticatedUser();
             if (user == null ) { break; }
             try {
-                launchMenu(user).run();
+                getMenu(user).run();
             } catch (IllegalStateException e) {
                 System.out.println("Error: " + e.getMessage());
             }
@@ -69,7 +74,13 @@ public class CampusHelpDeskTicketingSystem {
         }
     } // Main Loop of whole System
 
-    public static BaseMenu launchMenu(User user) {
+
+    // Instantiates and returns the appropriate menu view based on the authenticated user's role.
+    // @param user The currently authenticated user.
+    // @return The corresponding BaseMenu implementation for the user's role.
+    // @throws IllegalArgumentException if the provided user is null.
+    // @throws IllegalStateException if no menu mapping exists for the user's role.
+    public static BaseMenu getMenu(User user) {
         
         if (user == null) throw new IllegalArgumentException("User cannot be null");
         if (user instanceof Admin admin)         return new AdminMenu(admin, input, repository);
@@ -78,25 +89,22 @@ public class CampusHelpDeskTicketingSystem {
         throw new IllegalStateException("No menu for " + user.getRole());
 
     }
-
+    
+    // Receives the a Repository, populates the repository with initial mock data including users, support agents, and sample tickets.
     public static void seedData(Repository repo) {
 
         if (repo == null) { return; }
 
-        SupportAgent agent1 = new SupportAgent("AGT-001", "Bob", "Builder", "bob@univ.edu", "pass123", repo, "EMP-201", "FACILITIES_MAINTENANCE", "ext201");
-        SupportAgent agent2 = new SupportAgent("AGT-002", "Charlie", "Coder", "charlie@univ.edu", "pass123", repo, "EMP-202", "SOFTWARE_SYSTEMS", "ext202");
-        SupportAgent agent3 = new SupportAgent("AGT-003", "Dave", "Debug", "dave@univ.edu", "pass123", repo, "EMP-203", "SOFTWARE_SYSTEMS", "ext203");
-        SupportAgent agent4 = new SupportAgent("AGT-004", "Nina", "Network", "nina@univ.edu", "pass123", repo, "EMP-204", "NETWORK", "ext204");
-        SupportAgent agent5 = new SupportAgent("AGT-005", "Hank", "Hardware", "hank@univ.edu", "pass123", repo, "EMP-205", "HARDWARE", "ext205");
-        SupportAgent agent6 = new SupportAgent("AGT-006", "Sam", "Secure", "sam@univ.edu", "pass123", repo, "EMP-206", "ACCOUNT_SECURITY", "ext206");
-
-        Student student1 = new Student("REQ-001", "David", "Santos", "david@univ.edu", "pass123", repo, "S-001", "BSCS", 3, "3A");
-        Student student2 = new Student("REQ-002", "Maria", "Reyes", "maria@univ.edu", "pass123", repo, "S-002", "BSIT", 2, "2B");
-        Student student3 = new Student("REQ-003", "Paolo", "Cruz", "paolo@univ.edu", "pass123", repo, "S-003", "BSCS", 4, "4A");
-        Faculty faculty1 = new Faculty("REQ-004", "Eve", "Lopez", "eve@univ.edu", "pass123", repo, "F-001", "CS Dept", "Professor", "ext301");
-        Faculty faculty2 = new Faculty("REQ-005", "Frank", "Tan", "frank@univ.edu", "pass123", repo, "F-002", "IT Dept", "Instructor", "ext302");
-
-        Admin admin = new Admin("ADM-001", "Alice", "Admin", "alice@univ.edu", "pass123", repo, "EMP-100", "IT", "ext111");
+        Admin admin = new Admin("ACC-001", "Alice", "Admin", "alice@univ.edu", "pass123", repo, "EMP-100", "IT", "ext111");
+        Student student1 = new Student("ACC-002", "David", "Santos", "david@univ.edu", "pass123", repo, "S-001", "BSCS", 3, "3A");
+        Faculty faculty1 = new Faculty("ACC-003", "Eve", "Lopez", "eve@univ.edu", "pass123", repo, "F-001", "CS Dept", "Professor", "ext301");
+        
+        SupportAgent agent1 = new SupportAgent("ACC-004", "Bob", "Builder", "bob@univ.edu", "pass123", repo, "EMP-201", "FACILITIES_MAINTENANCE", "ext201");
+        SupportAgent agent2 = new SupportAgent("ACC-005", "Charlie", "Coder", "charlie@univ.edu", "pass123", repo, "EMP-202", "SOFTWARE_SYSTEMS", "ext202");
+        SupportAgent agent3 = new SupportAgent("ACC-006", "Dave", "Debug", "dave@univ.edu", "pass123", repo, "EMP-203", "SOFTWARE_SYSTEMS", "ext203");
+        SupportAgent agent4 = new SupportAgent("ACC-007", "Nina", "Network", "nina@univ.edu", "pass123", repo, "EMP-204", "NETWORK", "ext204");
+        SupportAgent agent5 = new SupportAgent("ACC-008", "Hank", "Hardware", "hank@univ.edu", "pass123", repo, "EMP-205", "HARDWARE", "ext205");
+        SupportAgent agent6 = new SupportAgent("ACC-009", "Sam", "Secure", "sam@univ.edu", "pass123", repo, "EMP-206", "ACCOUNT_SECURITY", "ext206");
 
         repo.addUser(admin);
         repo.addUser(agent1);
@@ -106,64 +114,7 @@ public class CampusHelpDeskTicketingSystem {
         repo.addUser(agent5);
         repo.addUser(agent6);
         repo.addUser(student1);
-        repo.addUser(student2);
-        repo.addUser(student3);
         repo.addUser(faculty1);
-        repo.addUser(faculty2);
-
-
-        // T1: full lifecycle with a reopen -> CLOSED (FACILITIES -> Bob)
-        Ticket t1 = student1.createTicket("HIGH", "FACILITIES_MAINTENANCE", "HVAC & Temperature", "Aircon is leaking in Room 402");
-        student1.submitTicket(t1);
-        agent1.updatePriority(t1.getTicketId(), "URGENT", "Water is reaching the outlets");
-        agent1.updateTicketState(t1.getTicketId(), "IN_PROGRESS", "Inspecting the aircon unit");
-        agent1.updateTicketState(t1.getTicketId(), "RESOLVED", "Replaced filter and sealed leak");
-        student1.reopenTicket(t1.getTicketId(), "Still leaking a bit");
-        
-
-        // T2: OPEN with comments from both sides (FACILITIES -> Bob)
-        Ticket t2 = faculty1.createTicket("MEDIUM", "FACILITIES_MAINTENANCE", "Carpentry & Keys", "Door handle broken in faculty room");
-        faculty1.submitTicket(t2);
-        faculty1.addComment(t2.getTicketId(), "Please check soon.");
-        agent1.addComment(t2.getTicketId(), "Will check tomorrow morning.");
-
-        // T3: IN_PROGRESS, reassigned by admin to the other software agent
-        Ticket t3 = student2.createTicket("LOW", "SOFTWARE_SYSTEMS", "LMS / Portal Issue", "Portal login error");
-        student2.submitTicket(t3);
-        admin.reassignTicket(t3.getTicketId(), "AGT-003", "Load balancing task");
-        SupportAgent t3Agent = (SupportAgent) repo.findUserById("AGT-003");
-        t3Agent.updateTicketState(t3.getTicketId(), "IN_PROGRESS", "Reproducing the login error");
-
-        // T4: DELETED by admin (NETWORK -> Nina)
-        Ticket t4 = faculty2.createTicket("URGENT", "NETWORK", "Campus Wi-Fi Disconnect", "Wi-Fi down in hall");
-        faculty2.submitTicket(t4);
-        admin.deleteTicket(t4.getTicketId(), "Duplicate ticket request");
-
-        // T5: DELETED by requestor
-        Ticket t5 = student3.createTicket("LOW", "HARDWARE", "Printer & Copier Jam", "Printer jam in Lab 2");
-        student3.submitTicket(t5);
-        student3.deleteTicket(t5.getTicketId(), "Jam cleared by a classmate");
-
-        // T6: RESOLVED, waiting for requestor to close (HARDWARE -> Hank)
-        Ticket t6 = student3.createTicket("HIGH", "HARDWARE", "Classroom AV & Projector", "Projector has no signal in Room 210");
-        student3.submitTicket(t6);
-        agent5.updateTicketState(t6.getTicketId(), "IN_PROGRESS", "Checking HDMI cable");
-        agent5.updateTicketState(t6.getTicketId(), "RESOLVED", "Replaced HDMI cable");
-
-        // T7: ACCOUNT_SECURITY ticket, auto-assigned to Sam
-        Ticket t7 = student2.createTicket("URGENT", "ACCOUNT_SECURITY", "Phishing & Scams", "Received a suspicious email asking for my password");
-        student2.submitTicket(t7);
-
-        // T8: second software ticket, auto-assigned by workload
-        Ticket t8 = faculty2.createTicket("MEDIUM", "SOFTWARE_SYSTEMS", "Software Installation", "Need MATLAB installed on office PC");
-        faculty2.submitTicket(t8);
-        faculty2.addComment(t8.getTicketId(), "Same problem on the lab PCs.");
-
-        // T9: NETWORK in progress
-        Ticket t9 = student1.createTicket("HIGH", "NETWORK", "VPN Connection", "VPN keeps dropping at home");
-        student1.submitTicket(t9);
-        agent4.updateTicketState(t9.getTicketId(), "IN_PROGRESS", "Checking VPN logs");
-        agent4.addComment(t9.getTicketId(), "Please send the exact error message.");
         
     }
 
@@ -179,19 +130,23 @@ import java.util.ArrayList;
 
 public class Repository {
 
+    // It acts as the central storage area that other class can use to add, search, and retrieve users and tickets
+
     private final ArrayList<User> users;
     private final ArrayList<Ticket> tickets;
     
-
+    //Constructs a new Repository instance and initializes internal user and ticket lists.
     public Repository() {
         users = new ArrayList<>();
         tickets = new ArrayList<>();
     }
 
+    // Receives a new user and adds a new user to the repository
     public void addUser(User user) {
         users.add(user);
     }
 
+    // Receives an id and searches for the user with that id and returns a user or null if none.
     public User findUserById(String targetId) {
         for (User user : users) {
             if (user.getUserId().equalsIgnoreCase(targetId)) {
@@ -201,14 +156,17 @@ public class Repository {
         return null; // no user with this id exists
     }
 
+    // Returns a copy of all users in the system
     public ArrayList<User> getAllUsers() {
         return new ArrayList<>(users);
     } 
 
+    // Receives a ticket and adds a new ticket to the repository
     public void addTicket(Ticket ticket) {
         tickets.add(ticket);
     }
 
+    // Receives an id and searches for the ticket with that id and returns a ticket or null if none.
     public Ticket findTicketById(String targetId) {
          for (Ticket ticket : tickets) {
             if (ticket.getTicketId().equalsIgnoreCase(targetId)) {
@@ -218,6 +176,7 @@ public class Repository {
         return null; // no ticket with this id exists
     }
 
+    // Returns a copy of all tickets in the system
     public ArrayList<Ticket> getAllTickets() {
         return new ArrayList<>(tickets);
     }
@@ -234,10 +193,14 @@ import java.util.LinkedHashMap;
 
 public class Admin extends User {
 
+    // Represents the administrator of the Campus Help Desk Ticketing System. It extends the User class so it inherits common user information and methods. 
+    // The admin class has an additional responsibilities, including managing users, reassigning and deleting tickets, filtering records and generate systems summary
+
     private String employeeId;
     private String managedDepartment;
     private String deskExtension;
 
+    // Constructs a new Admin instance with administrative attributes
     public Admin(String userId, String firstName, String lastName, String email, String password, Repository repository, String employeeId, String managedDepartment, String deskExtension) {
         super("ADMIN", userId, firstName, lastName, email, password, repository);
         this.employeeId = employeeId;
@@ -245,6 +208,7 @@ public class Admin extends User {
         this.deskExtension = deskExtension;
     }
 
+    // Gets a ticket in the system even deleted ones or null if not found
     @Override
     public Ticket getTicket(String ticketId) {
         Ticket ticket =getRepository().findTicketById(ticketId);
@@ -254,11 +218,13 @@ public class Admin extends User {
         return ticket;
     } // Gets ALL tickets in the system even deleted ones
 
+    // Gets all tickets in the system even deleted ones
     @Override
     public ArrayList<Ticket> getTickets() {
         return getRepository().getAllTickets();
     } // gets all tickets
 
+    // Receives a userId and returns a user if found else null
     public User getUser(String userId) {
         User user = getRepository().findUserById(userId);
         if (user == null) {
@@ -267,6 +233,7 @@ public class Admin extends User {
         return user;
     } // Gets ALL users in the sysetm
 
+    // gets all users
     public ArrayList<User> getAllUsers() {
         return getRepository().getAllUsers();
     } // gets all users
@@ -281,17 +248,20 @@ public class Admin extends User {
     public void setManagedDepartment(String managedDepartment) { this.managedDepartment = managedDepartment; }
     public void setDeskExtension(String deskExtension) { this.deskExtension = deskExtension; }
 
+    // Accepts a ticketID, agentId and reason. Find the ticket and SupportAgent. Reassigns a ticket to another agent with amatching specialization by calling ticket methods 
     public void reassignTicket(String ticketId, String agentId, String reason) {
         Ticket ticket = getTicket(ticketId);
         User user = getRepository().findUserById(agentId);
         ticket.reassignTicket(user, this, reason);
-    } // Reassigns a ticket check method for business rules
+    } 
 
+    // Accepts a ticketID and reason, finds the ticket and call the ticket delete method.
     public void deleteTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId);
         ticket.deleteTicket(this, reason);
     } // Deletes any tickets that isnt already deleted
 
+    // Returns filtered Ticket list based on the field and value
     public ArrayList<Ticket> filterTickets(String field, String value) {
         ArrayList<Ticket> result = new ArrayList<>();
         ArrayList<Ticket> allTickets = getTickets(); // gets all tickets
@@ -312,6 +282,7 @@ public class Admin extends User {
         return result;
     } // Returns filtered Ticket list based on the field and valuee
 
+    // Returns filtered User list based on the field and value
     public ArrayList<User> filterUsers(String field, String value) {
         ArrayList<User> result = new ArrayList<>();
         String searchItem = value.trim().toUpperCase();
@@ -331,6 +302,7 @@ public class Admin extends User {
         return result;
     } // Returns filtered User list based on the field and value
 
+    // this method uses the Filter Users and Filter Ticket method inputting a FIELD and VALUE and getting the SIZE() of the lists and adding it to a LinkedHashMap
     public LinkedHashMap<String, Integer> getSummaryCounts() {
         LinkedHashMap<String, Integer> counts = new LinkedHashMap<>(); // A linked Hash map is a series of KEY-VALUE pairs EX. TOTAL-TICKETS = KEY.  15 VALUE
         counts.put("TOTAL_TICKETS", getTickets().size()); // TICKET 
@@ -356,12 +328,16 @@ import java.time.LocalDateTime;
 
 public class Comment {
 
+    // Represents a comment added to a ticket, it stores the comment’s ID, author, message, date and time it was created. 
+    // This allows the Requestor and Support Agent to communicate properly.
+
     private final String commentId;
     private final User author;
     private final String message;
     private final LocalDateTime timestamp;
     private static int commentCounter = 0;
 
+    // Constructs a new Comment instance with author and message
     public Comment(User author, String message) {
         this.commentId = generateCommentId();
         this.author = author;
@@ -375,11 +351,11 @@ public class Comment {
     public String getMessage() {return message;}
     public LocalDateTime getTimestamp() { return timestamp;}
 
+    // called whenever a new comment is created
     private String generateCommentId() {
         commentCounter++;
         return String.format("CM-%03d", commentCounter);
-    } // called whenever a new comment is created
-
+    } 
 }
 
 <<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/Comment.java"
@@ -390,11 +366,15 @@ import datalayer.Repository;
 
 public class Faculty extends Requestor {
 
+    // It represents a faculty member, such as instructor or professor, who uses the system to submit tickets for campus-related problems. 
+    // It extends the Requestor class, allowing faculty members to inherit the requestor's feature.
+
     private String employeeId;
     private String department;
     private String position;
     private String deskExtension;
 
+    // Constructs a Faculty instance with employee and department details
     public Faculty(String userId, String firstName, String lastName, String email, String password, Repository repository, String employeeId, String department, String position, String deskExtension) {
         super(userId, firstName, lastName, email, password, repository);
         this.employeeId = employeeId;
@@ -426,10 +406,15 @@ import java.util.ArrayList;
 
 public class Requestor extends User {
 
+    // It represents users who submit help desk tickets, such as students and faculty members. Requestors can only access their own tickets. 
+    // Has the capability to create, submit, delete, reopen, close and add Comments on tickets. 
+
+    // Constructs a Requestor instance
     public Requestor(String userId, String firstName, String lastName, String email, String password, Repository repository) {
         super("REQUESTOR",userId, firstName, lastName, email, password, repository);
     }
 
+    // Accepts a ticket id and finds it. throws an exception if invalid Ticket ID / if you do not own ticket
     @Override
     public Ticket getTicket(String ticketId) {
         Ticket ticket = getRepository().findTicketById(ticketId);
@@ -440,8 +425,9 @@ public class Requestor extends User {
             throw new SecurityException("Ticket " + ticketId + " is not yours."); 
         } // Throw an Error if you try to access a ticket that isnt your
         return ticket;  
-    } // throws an exception if invalid Ticket ID / if you do not own ticket
+    } 
 
+    // Returns all tickets submitted by the requestor except Deleted ones
     @Override
     public ArrayList<Ticket> getTickets() {
        ArrayList<Ticket> myTickets = new ArrayList<>();
@@ -452,33 +438,39 @@ public class Requestor extends User {
                 }
             }
         return myTickets;
-    } // Returns all tickets submitted by the requestor except Deleted ones
+    } 
 
+    // Receives a priority, category, subject and description and Create a tickets then returns it.
     public Ticket createTicket(String priority, String category, String subject, String description) {
         return new Ticket(this, null, priority, category, subject, description);
-    } // Create a ticket 
+    } 
     
+    // after creating a ticket it calls ticket methods to auto-assign to agent and store in the repository
     public void submitTicket(Ticket ticket) {
         ticket.autoAssignAgent(getRepository().getAllUsers());
         getRepository().addTicket(ticket);
-     } // after creating a ticket auto assign to agent and store in the repo
+     } 
      
+    // Receives a ticketID and reason, find the ticket. Only allows deletion if a ticket if it is OPEN - IN-PROGRESS then calls ticket methods
     public void deleteTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
         ticket.requireActive(); // The ticket should be OPEN / IN_PROGRESS
         ticket.deleteTicket(this, reason); 
-     } // Deletes a ticket if it is OPEN - IN-PROGRESS
+     } 
      
+    // Receives a ticketID and reason, find the ticket. Reopens a ticket only if its RESOLVED
     public void reopenTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
         ticket.reopenTicket(this, reason);
-    } // Reopens a ticket only if its RESOLVED
+    } 
      
+    // Receives a ticketID and reason, find the ticket. Adds a comment to the specified ticket
     public void addComment(String ticketId, String message) {
         Ticket ticket = getTicket(ticketId);
         ticket.addComment(new Comment(this, message));
     }
 
+    // Receives a ticketID and reason, find the ticket. Close a ticket that is resolved and
     public void closeTicket(String ticketId, String reason) {
         Ticket ticket = getTicket(ticketId); // throws an error if not found
         ticket.closeTicket(this, reason);
@@ -495,18 +487,22 @@ import datalayer.Repository;
 
 public class Student extends Requestor {
     
-private String studentId;
-private String program;
-private int yearLevel;
-private String section;
+    // It represents a student who uses the system to submit tickets for campus-related problems. 
+    // It extends the Requestor class, allowing students to inherit the requestor's feature.
 
-public Student(String userId, String firstName, String lastName, String email, String password, Repository repository, String studentId, String program, int yearLevel, String section) {
-        super(userId, firstName, lastName, email, password, repository);
-        this.studentId = studentId;
-        this.program = program;
-        this.yearLevel = yearLevel;
-        this.section = section;
-    }
+    private String studentId;
+    private String program;
+    private int yearLevel;
+    private String section;
+
+    // Constructs a Student instance with student-specific attributes
+    public Student(String userId, String firstName, String lastName, String email, String password, Repository repository, String studentId, String program, int yearLevel, String section) {
+            super(userId, firstName, lastName, email, password, repository);
+            this.studentId = studentId;
+            this.program = program;
+            this.yearLevel = yearLevel;
+            this.section = section;
+        }
 
     // getters
     public String getStudentId() { return studentId; }
@@ -531,10 +527,14 @@ import java.util.ArrayList;
 
 public class SupportAgent extends User {
 
+    // Represents the help desk personnel responsible for handling and resolving campus-related tickets. 
+    // It extends the User class and provides methods to view assigned tickets, update ticket statuses and priorities, and add comments.
+
     private String employeeId;
     private String specialization;
     private String deskExtension;
 
+    // Constructs a SupportAgent instance with specialization and extension details
     public SupportAgent(String userId, String firstName, String lastName, String email, String password, Repository repository, String employeeId, String specialization, String deskExtension) {
         super("SUPPORT_AGENT", userId, firstName, lastName, email, password, repository);
         this.employeeId = employeeId;
@@ -552,6 +552,7 @@ public class SupportAgent extends User {
     public void setSpecialization(String specialization) { this.specialization = specialization; }
     public void setDeskExtension(String deskExtension) { this.deskExtension = deskExtension; }
 
+    // Gets an existing Ticket that is assigned to you throws an error is it does not exist or does not belong to you
     @Override
     public Ticket getTicket(String ticketId) {
         Ticket ticket = getRepository().findTicketById(ticketId);
@@ -562,8 +563,9 @@ public class SupportAgent extends User {
            throw new SecurityException("Ticket " + ticketId + " is not assigned to you.");
         } // Throw an error if the tickett isnt assigend to you
         return ticket; 
-    } // Gets an existing Ticket that is assigned to you
+    }
 
+    // Gets all assigned tickets that arent deleted
     @Override
     public ArrayList<Ticket> getTickets() {
         ArrayList<Ticket> assignedTickets = new ArrayList<>();
@@ -573,22 +575,25 @@ public class SupportAgent extends User {
             } // Get all tickets that assignedAgent ID matches mine that are also not deleted
         }
         return assignedTickets;
-    } // Gets all assigned tickets that arent deleted
+    } 
 
+    // Receives a ticketID and reason, find the ticket. Adds a comment to an assigned ticket. calls ticket method
     public void addComment(String ticketId, String message) {
         Ticket ticket = getTicket(ticketId);
         ticket.addComment(new Comment(this, message));
     }
 
+    // Receives a ticketID and reason, find the ticket. Updates a ticket state Form picking From OPEN / IN PROGRESS / RESOLVED. Calls ticket methods
     public void updateTicketState(String ticketId, String newState, String reason) {
         Ticket ticket = getTicket(ticketId);
         ticket.updateTicketState(newState, this, reason);
-    } // Updates a ticket state Form picking From OPEN / IN PROGRESS / RESOLVED
+    } 
 
+    // Receives a ticketID and reason and newPriority, find the ticket. Updates a ticket priority. calls ticket method to update
     public void updatePriority(String ticketId, String newPriority, String reason) {
         Ticket ticket = getTicket(ticketId);
         ticket.changePriority(newPriority, this, reason);
-    } // Updates aticket priority by picking from the 4. doesnt allow to assign the same priority
+    } 
 
 }
 <<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/SupportAgent.java"
@@ -599,6 +604,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class Ticket {
+
+    // Represents a ticket submitted by a requestor. It stores the ticket details and ticket logs. 
+    // It manages its own state actions and ensures that changes follow the system’s rules adn throws error if something is wrong.
 
     private final String ticketId;
     private final LocalDateTime dateSubmitted;
@@ -613,7 +621,7 @@ public class Ticket {
     private SupportAgent assignedAgent;
     private String priority;
 
-
+    // Constructs a Ticket instance and initializes logs
     public Ticket(Requestor submittedBy, SupportAgent assignedAgent, String priority, String category, String subject, String description) {
         this.ticketId = generateTicketId();
         this.submittedBy = submittedBy;
@@ -626,7 +634,7 @@ public class Ticket {
         this.description = description;
         comments = new ArrayList<>();
         ticketLogEntries = new ArrayList<>();
-        ticketLogEntries.add(new TicketLogEntry("OPEN", "OPEN", submittedBy.getUserId(), submittedBy.getFirstName(), "Ticket Created"));
+        ticketLogEntries.add(new TicketLogEntry("OPEN", "OPEN", submittedBy.getUserId(), "Ticket Created"));
     }
     
     // Getters
@@ -644,20 +652,48 @@ public class Ticket {
     public ArrayList<TicketLogEntry> getTicketLogEntries() {return new ArrayList<>(ticketLogEntries);}
 
     // setters
-    public void setAssignedAgent(SupportAgent agent) {this.assignedAgent = agent;} // Only used by Requestor's auto-assignOnly used by Requestor's auto-assign
+    private void setAssignedAgent(SupportAgent agent) {this.assignedAgent = agent;} // Only used by Requestor's auto-assignOnly used by Requestor's auto-assign
 
     // Ticket actions
 
+    // Receives a comment and add it to the ticket's list. Used by requestor / SupportAgent
     public void addComment(Comment comment) {
         requireNotFinished(); // A ticket should not be CLOSED / DELETED
         comments.add(comment);
-    } // Used by requestor / SupportAgent
+    } 
 
+    // Receives a list of users, picks the best user with the fewest tickets matching the ticket's category.
+    public void autoAssignAgent(ArrayList<User> users) {
+
+        SupportAgent bestAgent = null;
+        int fewestActiveTickets = Integer.MAX_VALUE;
+
+        for (User user : users) {
+            if (!(user instanceof SupportAgent agent)) { continue; } // User must be a supportAgent
+            if (!agent.getSpecialization().equalsIgnoreCase(category)) { continue; } // SupportAgent specializaiton must be thhe same as ticket category
+            
+            int activeCount = agent.getActiveTickets().size();
+            if (activeCount < fewestActiveTickets) {
+                fewestActiveTickets = activeCount;
+                bestAgent = agent;
+            } // Pick the agent with fewest active tickets that specialization matchhes the category of the ticket 
+        }
+
+        if (bestAgent != null) { 
+            setAssignedAgent(bestAgent);
+        } // if there is a best agent assign the ticket
+
+        // do nothing if there isnt an agent available
+
+    } // Picks the best agent for the job
+
+    // Receives a newstate, the agent, and reason. Checks for valid agent transitions first before moving adn logging. Used by SupportAgent
     public void updateTicketState(String newState, User changedBy, String reason) {
         checkWorkFlowMoves(newState);
         move(newState, changedBy, reason);
     } // Used by SupportAgent 
 
+    // Receives a new priority and the agent. checks for rules in changing a priority before changing and logging. Used by SupportAgent, 
     public void changePriority(String newPriority, User changedBy, String reason) {
         requireActive(); // A ticket should still be OPEN / IN-PROGRESS to be able to change its priority
         if (newPriority.equalsIgnoreCase(priority)) { 
@@ -666,30 +702,34 @@ public class Ticket {
         String oldPriority = this.priority;
         this.priority = newPriority;
         log(oldPriority, priority, changedBy, reason); // Create a log
-    } // Used by SupportAgent, checks for rules in changing a priority
+    } 
     
+    // Receives who made the change, requries a ticket to be RESOLVED first before moving. Used by Requestor
     public void closeTicket(User by, String reason) {
         requireResolved();
         move("CLOSED", by, reason);
-    }  // Used by Requestor
+    }  
 
+    // Receives who made the change, requries a ticket to be RESOLVED first before moving. Used by Requestor
     public void reopenTicket(User by, String reason) {
         requireResolved(); // A ticket can only be reopened if its RESOLVED
         move("OPEN", by, reason);
-    } // Used by Requestor
+    } 
 
+    // Receives the use who made the change and reason. Used by Requestor (can only delete OPEN/ INPROGRESS Tickets) and Admin (Admin can delete a ticket from any state except DELETED)
     public void deleteTicket(User by, String reason) {
         requireNotFinished();
         move("DELETED", by, reason);
-    } // Used by Requestor (can only delete OPEN/ INPROGRESS Tickets) and Admin (Admin can delete a ticket from any state except DELETED)
+    } 
 
+    // Receives a agentm and the user who mad ethe change and reason. Reassign a active ticket to a different agent with the same specialization. Used by Admin. 
     public void reassignTicket(User user, User changedBy, String reason) {
         checkReassign(user);
         SupportAgent newAgent = (SupportAgent) user;
         String oldAgentName = (assignedAgent != null) ? getAssignedAgent().getFullName() : "Unassigned"; // if the there is a currently assigned agent get their name else put Unassigned
         setAssignedAgent(newAgent); // Set assigned Agent
         log(oldAgentName, newAgent.getFullName(), changedBy, reason); // Create a ticket log if successful
-    } // Used by Admin. Reassign a active ticket to a different agent with the same specialization
+    } 
 
     // State Helpers - Asks a quetsion of thhe current state of a ticket
 
@@ -700,29 +740,34 @@ public class Ticket {
 
     // Throwers (early throw for UI Experiecne)
 
+    // throw and error if a ticket is already CLOSED / DELETED
     public void requireNotFinished() {
         if (isFinished()) {
             throw new IllegalStateException("Ticket " + ticketId + " is " + state + " and can no longer be changed.");
         }
-    } // throw and error if a ticket is already CLOSED / DELETED
+    } 
 
+    // Throw an error if a Ticket isnt OPEN / IN-PROGRESS
     public void requireActive() {
         if (!isActive()) {
             throw new IllegalStateException("Ticket " + ticketId + " is " + state + ". Only OPEN or IN_PROGRESS tickets allow this.");
         }
-    } // Throw an error if a Ticket isnt OPEN / IN-PROGRESS
+    } 
 
+    // Throw an error if a ticket isnt Resolved
     public void requireResolved() {
         if (!isResolved()) {
             throw new IllegalStateException("Ticket " + ticketId + " is " + state + ". Only RESOLVED tickets allow this.");
         }
     } // Throw an error if a ticket isnt Resolved
 
+    // Throw an error if a Ticketr is Deleted
     public void requireNotDeleted() {
     if (isDeleted())
         throw new IllegalStateException("Ticket " + ticketId + " is already DELETED.");
-    } // Throw an error if a Ticketr is Deleted
+    } 
 
+    // Receives a new state, checks for valid supportagent state transitions. Used by SupportAgent
     public void checkWorkFlowMoves(String newState) {
         boolean valid = switch(state) {
             case "OPEN"        -> newState.equalsIgnoreCase("IN_PROGRESS");
@@ -733,8 +778,9 @@ public class Ticket {
         if (!valid) {
             throw new IllegalStateException("Ticket " + ticketId + " cannot move from " + state + " to " + newState + ".");
         } // Throws an error if it is an invalid state transition
-    } // Used by SupportAgent
+    } 
 
+    // Checks if the target user can be assigned to this ticket
     public void checkReassign(User user) {
         requireActive(); // A ticket should still be OPEN / IN-PROGRESS
         if (user == null) {
@@ -756,19 +802,24 @@ public class Ticket {
         } // cannot assign to an agent with a different category from the ticket
     }
     
+    // private helpers 
+    
+    // Creates an automatic TicketID when ticket is created
     private String generateTicketId() {
         ticketCounter++;
         return String.format("TK-%03d", ticketCounter);
     } // Creates an automatic TicketID when ticket is created 
 
+    // Receives a newState, user and reason. The method that actually moves a ticket from a state
     private void move(String newState, User by, String reason) {
         String oldState = state; // remember oldState
         state = newState.toUpperCase();  // assign new State
         log(oldState, state, by, reason); // Creates a tickert log if succesful
     } // the method that actually moves a ticket from a state
 
+    // Requires an old value and new value the user who made the change and reason. Creates a new ticketLog whenever something changes within a ticket EX: Priority, Agent, or a State change.
     private void log(String from, String to, User by, String reason) {
-        TicketLogEntry log = new TicketLogEntry(from, to, by.getUserId(), by.getFirstName(), reason.trim());
+        TicketLogEntry log = new TicketLogEntry(from, to, by.getUserId(), reason.trim());
         ticketLogEntries.add(log);
     } // Creates a new ticketLog whenever something changes within a ticket EX: Priority, Agent, or a State change
 
@@ -781,33 +832,35 @@ import java.time.LocalDateTime;
 
 public class TicketLogEntry {
 
+    // It records changes made to a help desk ticket. It stores the previous state, new user, 
+    // user who made the change, timestamp and reason. This helps track the activities performed on a ticket.
+    
     private final String ticketLogEntryId;
-    private final String previousState;
-    private final String newState;
+    private final String oldValue;
+    private final String newValue;
     private final String changedByUserId;
-    private final String changedByUserName;
     private final LocalDateTime timestamp;
     private final String reason;
     private static int ticketLogEntryCounter = 0;
 
-    public TicketLogEntry(String previousState, String newState, String changedByUserId, String changedByUserName, String reason) {
+    // Constructs a new TicketLogEntry instance
+    public TicketLogEntry(String oldValue, String newValue, String changedByUserId, String reason) {
         this.ticketLogEntryId = generateTicketLogEntryId();
-        this.previousState = previousState;
-        this.newState = newState;
+        this.oldValue = oldValue;
+        this.newValue = newValue;
         this.changedByUserId = changedByUserId;
-        this.changedByUserName = changedByUserName;
         this.timestamp = LocalDateTime.now();
         this.reason = reason;
     }
 
     public String getTicketLogEntryId() { return ticketLogEntryId; }
-    public String getPreviousState() { return previousState; }
-    public String getNewState() { return newState; }
+    public String getOldValue() { return oldValue; }
+    public String getNewValue() { return newValue; }
     public String getChangedByUserId() { return changedByUserId; }
-    public String getChangedByUserName() { return changedByUserName; }
     public LocalDateTime getTimestamp() { return timestamp; }
     public String getReason() { return reason; }
 
+    // called whenever a new log is created
     private String generateTicketLogEntryId() {
         ticketLogEntryCounter++;
         return String.format("LG-%03d", ticketLogEntryCounter);
@@ -825,6 +878,9 @@ import java.util.ArrayList;
 
 public abstract class User {
 
+    // Abstract parent class of all system users. It contains the common information and methods shared 
+    // by different types of users, such as Requestor/SupportAgent.
+
     private final String userId;
     private String firstName;
     private String lastName;
@@ -834,6 +890,7 @@ public abstract class User {
     private final Repository repository;
     private final String role;
 
+    // Constructs a User instance
     public User(String role, String userId, String firstName, String lastName, String email, String password, Repository repository) {
         this.role = role;
         this.userId = userId;
@@ -858,15 +915,21 @@ public abstract class User {
     public String getLastName() { return lastName; }
     public String getFullName() {return firstName + " " + lastName;}
     public String getEmail() { return email; }
-    public String getPassword() { return password; }
     public LocalDateTime getDateRegistered() { return dateRegistered; }
     protected Repository getRepository() {return repository;}
 
     // Others
+
+    // Receives a password if the provided password matches the user's password returns true
     public boolean checkPassword(String password) { return this.password != null && this.password.equals(password); } 
+
+    // Abstract method to get a ticket by ID
     public abstract Ticket getTicket(String ticketId);
+
+    // Abstract method to get all tickets associated with the user
     public abstract ArrayList<Ticket> getTickets();
 
+    // Returns all tickets submitted by the requestor that are OPEN / INPROGRESS except Deleted ones
     public ArrayList<Ticket> getActiveTickets() {
         ArrayList<Ticket> myTickets = new ArrayList<>();
         for (Ticket ticket : getTickets()) {
@@ -875,8 +938,7 @@ public abstract class User {
             }
         }
         return myTickets;
-     } // Returns all tickets submitted by the requestor that are OPEN / INPROGRESS except Deleted ones
-
+    } 
 
 }
 <<<WORKSPACE_EXPORTER_FILE_END>>> path="src/entitylayer/User.java"
@@ -897,13 +959,20 @@ import java.util.Scanner;
 
 public class AdminMenu extends BaseMenu {
 
+    // It provides the menu and interface for administrators in Campus Help Desk Ticketing System. 
+    // It also allows the admin to manage users, filter and view tickets, reassign tickets to support agents, delete tickets, and generate summary reports.
+    // Throws early for user experience
+    // Uses try-catchs and confirmation for actions
+
     private final Admin admin;
 
+    // Constructs an AdminMenu instance
     public AdminMenu(Admin admin, Scanner input, Repository repository) {
         super(admin, input, repository);
         this.admin = admin;
     }
 
+    // Displays the admin menu options
     @Override
     protected void displayMenu() {
         printHeader("ADMIN MENU");
@@ -917,6 +986,7 @@ public class AdminMenu extends BaseMenu {
         System.out.println("[0] Logout");
     }
 
+    // Executes the selected admin menu choice
     @Override
     protected void executeChoice(int choice) {
         switch(choice) {
@@ -931,16 +1001,19 @@ public class AdminMenu extends BaseMenu {
         }
     }
 
-     @Override
+    // Returns the minimum valid menu choice
+    @Override
     protected int getMinChoice() {
         return 0;
     }
 
+    // Returns the maximum valid menu choice
     @Override
     protected int getMaxChoice() {
         return 7;
     }
 
+    // Handles viewing and filtering all system users
     public void viewAllUsers() {
         while (true) {
             printHeader("View All Users");
@@ -976,6 +1049,7 @@ public class AdminMenu extends BaseMenu {
         }
     }
 
+    // Handles viewing detailed information for a specific user
     public void viewUserDetails() {
         printHeader("View User Details");
         String userId = readLine("Enter User ID: ", false);
@@ -988,6 +1062,7 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles viewing and filtering all system tickets
     public void viewAllTickets() {
         while (true) {
             printHeader("View All Tickets");
@@ -1031,6 +1106,7 @@ public class AdminMenu extends BaseMenu {
         }
     }
 
+    // Handles viewing detailed information for a specific ticket
     public void viewTicketDetails() {
         printHeader("View Ticket Details");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -1043,6 +1119,7 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles reassigning a ticket to another agent[cite: 1]
     public void reassignTicket() {
         printHeader("Reassign a Ticket");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -1064,6 +1141,7 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles deleting a ticket
     public void deleteTicket() {
         printHeader("Delete a Ticket");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -1083,6 +1161,7 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Generates and displays a summary report of system statistics
     public void generateSummaryReport() {
         printHeader("Summary Report");
         LinkedHashMap<String, Integer> counts = admin.getSummaryCounts();
@@ -1104,6 +1183,7 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Displays formatted details of a specific user
     private void viewUserDetails(User user) {
 
         System.out.println();
@@ -1126,7 +1206,6 @@ public class AdminMenu extends BaseMenu {
             System.out.printf("%-16s : %s%n", "Desk-Extension", faculty.getDeskExtension());
         }
 
-
         if (user instanceof SupportAgent supportAgent) {
             System.out.printf("%-16s : %s%n", "EmployeeId", supportAgent.getEmployeeId());
             System.out.printf("%-16s : %s%n", "Specialization", supportAgent.getSpecialization());
@@ -1142,6 +1221,7 @@ public class AdminMenu extends BaseMenu {
 
     }
 
+    // Displays a tabular list of users
     private void displayUsers(ArrayList<User> users) {
         if (users.isEmpty()) {
             printError("No users found.");
@@ -1181,6 +1261,9 @@ import java.util.Scanner;
 
 public abstract class BaseMenu {
 
+    // Serves as an abstract parent class for the different menu in Campus Help Desk Ticketing System. 
+    // It contains common methods for displaying ticket information, accepting and validating user input, formatting output, and controlling the menu loop. 
+
     protected User user;
     protected Scanner input;
     protected boolean running;
@@ -1188,7 +1271,7 @@ public abstract class BaseMenu {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final int WIDTH = 60;
     
-
+    // Constructs a BaseMenu instance[cite: 1]
     protected BaseMenu(User user, Scanner input, Repository repository) {
         this.input = input;
         this.user = user;
@@ -1196,6 +1279,7 @@ public abstract class BaseMenu {
         this.running = true;
     }
 
+    // Main loop running the console menu
     public void run() {
         while (running) {
             System.out.println();
@@ -1204,12 +1288,14 @@ public abstract class BaseMenu {
             int choice = readInt("Enter your choice: ", getMinChoice(), getMaxChoice()); // prompts the user
             executeChoice(choice); // executes that choice
         }
-    } // Contains Main loop of Menus only
+    } 
 
+    // Stops the menu loop
     public void stop() {
         this.running = false;
     }
 
+    // Displays detailed information for a specific ticket
     protected void displayTicket(Ticket t) {
         String agentName = (t.getAssignedAgent() != null) ? t.getAssignedAgent().getFullName() : "Unassigned";
         String requestorName = (t.getSubmittedBy() != null) ? t.getSubmittedBy().getFullName() + " (" + t.getSubmittedBy().getRole() + ")" : "Unknown";
@@ -1225,20 +1311,21 @@ public abstract class BaseMenu {
         System.out.printf("%-13s : %s%n", "Description", t.getDescription());
         System.out.println();
     
-        printField("Comments", String.valueOf(t.getComments().size()));
+        System.out.printf("%-13s : %s%n", "Comments", t.getComments().size());
         for (Comment c : t.getComments()) {
             System.out.printf("[%s] %-30s | %s%n", formatDate(c.getTimestamp()), c.getAuthorName(), c.getMessage());
         }
         System.out.println();
 
-        printField("History", String.valueOf(t.getTicketLogEntries().size()));
+        System.out.printf("%-13s : %s%n", "History", t.getTicketLogEntries().size());
         for (TicketLogEntry log : t.getTicketLogEntries()) {
-            System.out.printf("[%s] %-30s | %s: %s%n", formatDate(log.getTimestamp()), (log.getPreviousState() + " -> " + log.getNewState()), log.getChangedByUserName(), log.getReason() );
+            System.out.printf("[%s] %-30s | %s: %s%n", formatDate(log.getTimestamp()), (log.getOldValue() + " -> " + log.getNewValue()), log.getChangedByUserId(), log.getReason() );
         }
         System.out.println();
         printDivider();
     }
 
+    // Displays a tabular list of tickets
     protected void displayTickets(ArrayList<Ticket> tickets) {
        if (tickets.isEmpty()) {
             printError("No tickets found.");
@@ -1265,6 +1352,7 @@ public abstract class BaseMenu {
         System.out.println();
     }
 
+    // Prompts for and validates an integer input within a range
     protected int readInt(String prompt, int min, int max) {
         while (true) {
             System.out.print(prompt);
@@ -1283,6 +1371,7 @@ public abstract class BaseMenu {
         }
     }
 
+    // Prompts for and reads a line of text input
     protected String readLine(String prompt, boolean allowBlank) {
         while (true) {
             System.out.print(prompt);
@@ -1298,6 +1387,7 @@ public abstract class BaseMenu {
         }
     } 
 
+    // Truncates text to fit display limits
     protected String truncate(String text, int maxLength) {
         if (text == null) { return ""; }
         if (text.length() <= maxLength) {return text;}
@@ -1305,6 +1395,7 @@ public abstract class BaseMenu {
         return text.substring(0, maxLength -3) + "...";
     }
 
+    // Prompts the user for a confirmation
     protected boolean confirm(String prompt) {
         while (true) {
             System.out.print(prompt + " [Y/N]: ");
@@ -1323,11 +1414,13 @@ public abstract class BaseMenu {
         }
     } // asks a question then returns the choice
 
+    // Pauses execution until the user presses Enter
     protected void waitForEnter() {
         System.out.print("\nPress Enter to proceed: ");
         input.nextLine();
     } 
 
+    // Prompts the user to select a ticket priority
     protected String readPriority() {
         while(true) {
             System.out.println("");
@@ -1346,6 +1439,7 @@ public abstract class BaseMenu {
         }
     }
 
+    // Prompts the user to select a ticket category
     protected String readCategory() {
         while(true) {
             System.out.println("");
@@ -1366,6 +1460,7 @@ public abstract class BaseMenu {
         }
     }
 
+    // Prompts the user to select or enter a ticket subject based on category
     protected String readSubject(String category) {
         switch (category) {
             case "FACILITIES_MAINTENANCE" -> {
@@ -1457,6 +1552,7 @@ public abstract class BaseMenu {
         return readLine("Enter Subject: ", false);
     }
 
+    // Prompts the user to select a ticket state
     protected String readState() { 
         while(true) {
             System.out.println("");
@@ -1477,6 +1573,7 @@ public abstract class BaseMenu {
         }
     }
 
+    // Prompts the user to select a user role
     protected String readRole() {
         while(true) {
             System.out.println("");
@@ -1493,10 +1590,12 @@ public abstract class BaseMenu {
         }
     }
 
+    // Prints a line of repeated characters
     protected void printLine(char c) {
         System.out.println(String.valueOf(c).repeat(WIDTH));
     }
 
+    // Prints a formatted header title
     protected void printHeader(String title) {
         System.out.println();
         printLine('=');
@@ -1504,29 +1603,35 @@ public abstract class BaseMenu {
         printLine('=');
     }
 
+    // Prints a visual divider line
     protected void printDivider() {
         printLine('-');
     }
 
+    // Prints a success message
     protected void printSuccess(String message) {
         System.out.println("[OK] " + message);
     }
  
+    // Prints an error message
     protected void printError(String message) {
         System.out.println("[!] Error: " + message);
     }
 
+    // Prints a labeled field and value
     protected void printField(String label, String value) {
-        System.out.printf("%-14s: %s%n", label, value);
+        System.out.printf("%-25s: %s%n", label, value);
     }
 
+    // Formats a date-time object into a standard string
     protected String formatDate(LocalDateTime dateTime) {
         return dateTime.format(DATE_FORMAT);
     }
-    protected abstract void displayMenu();
-    protected abstract void executeChoice(int choice);
-    protected abstract int getMinChoice();
-    protected abstract int getMaxChoice();
+   
+    protected abstract void displayMenu(); // Abstract method to display menu options
+    protected abstract void executeChoice(int choice); // Abstract method to execute a menu choice
+    protected abstract int getMinChoice(); // Abstract method to get minimum choice
+    protected abstract int getMaxChoice(); // // Abstract method to get maximum choice
     
 }
 <<<WORKSPACE_EXPORTER_FILE_END>>> path="src/presentationlayer/BaseMenu.java"
@@ -1539,12 +1644,18 @@ import java.util.Scanner;
 
 public class LoginMenu extends BaseMenu {
 
-    User authenticatedUser;
+    // It handles the login process and allows the user to enter their user ID and password, verifies their credential, 
+    // and identifies the authenticated user before they access the appropriate menu. 
+    // Throws early for user experience
 
+    private User authenticatedUser;
+
+    // Constructs a LoginMenu instance
     public LoginMenu(Scanner input, Repository repository) {
         super(null, input, repository);
     }
 
+    // Displays the login menu options
     @Override
     protected void displayMenu() {
         printHeader("SYSTEM LOGIN");
@@ -1552,6 +1663,7 @@ public class LoginMenu extends BaseMenu {
         System.out.println("[0] EXIT");
     }
 
+    // Executes the selected login menu choice
     @Override
     protected void executeChoice(int choice) {
         switch (choice) {
@@ -1564,20 +1676,23 @@ public class LoginMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Returns minimum menu choice
     @Override
     protected int getMinChoice() {
         return 0;
     }
 
+    // Returns maximum menu choice
     @Override
     protected int getMaxChoice() {
         return 1;
     }
 
+    // Handles user credential input and authentication
     private void handleLogin() {
 
         printHeader("Please Enter Credentials");
-        String userId = readLine("User ID (e.g., REQ-001): ", false);
+        String userId = readLine("User ID (e.g., ACC-001): ", false);
         String userPassword = readLine("Password: ", false);
 
         System.out.println();
@@ -1594,6 +1709,7 @@ public class LoginMenu extends BaseMenu {
 
     }
 
+    // Returns the successfully authenticated user
     public User getAuthenticatedUser() {
         return authenticatedUser;
     }
@@ -1611,13 +1727,21 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class RequestorMenu extends BaseMenu {
+
+    // It provides the menu for requestors, such as students and faculty, to manage their ticket. 
+    // It allows them to create tickets, view their submitted tickets, add comments, delete active tickets, reopen resolved tickets and close resolved tickets. 
+    // Throws early for user experience
+    // Uses try-catchs and confirmation for actions
+
     private final Requestor requestor;
 
+    // // Constructs a RequestorMenu instance
     public RequestorMenu(Requestor requestor, Scanner input, Repository repository) {
         super(requestor, input, repository);
         this.requestor = requestor;
     }
 
+    // Displays the requestor menu options
     @Override
     protected void displayMenu() {
         printHeader("REQUESTOR MENU");
@@ -1631,6 +1755,7 @@ public class RequestorMenu extends BaseMenu {
         System.out.println("[0] Logout");
     }
     
+    // Executes the selected requestor menu choice
     @Override
     protected void executeChoice(int choice) {
         switch (choice) {
@@ -1645,16 +1770,19 @@ public class RequestorMenu extends BaseMenu {
         }
     }
 
+    // Returns minimum menu choice 
     @Override
     protected int getMinChoice() {
         return 0;
     } 
 
+    // Returns maximum menu choice
     @Override
     protected int getMaxChoice() {
         return 7;
     }
 
+    // Handles submitting a new support ticket
     public void createTicket() {
         printHeader("Submit a New Ticket");
 
@@ -1682,6 +1810,7 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     } 
 
+    // Handles viewing submitted tickets
     public void viewMyTickets() {
         while (true) {
             ArrayList<Ticket> tickets = requestor.getTickets();
@@ -1707,6 +1836,7 @@ public class RequestorMenu extends BaseMenu {
         }
     }
 
+    // Handles viewing detailed information for a specific ticket
     public void viewTicketDetails() {
         printHeader("View Ticket details ");
 
@@ -1720,6 +1850,7 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles adding a comment to a ticket
     public void addComment() {
         printHeader("Add comment to Ticket");
         String ticketId = readLine("Enter ticket iD: ", false);
@@ -1740,6 +1871,7 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles deleting an active ticket
     public void deleteTicket() {
         printHeader("Delete a Ticket");
         
@@ -1760,6 +1892,7 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles reopening a resolved ticket
     public void reopenTicket() {
         printHeader("Re-open a Ticket");
 
@@ -1780,6 +1913,7 @@ public class RequestorMenu extends BaseMenu {
         waitForEnter();
     }
     
+    // Handles closing a resolved ticket
     public void closeTicket() {
         printHeader("Close a Ticket");
 
@@ -1814,13 +1948,20 @@ import java.util.Scanner;
 
 public class SupportAgentMenu extends BaseMenu {
 
+    // It provides the menu for support agents, it allows them to view their assigned tickets, 
+    // check ticket details, update ticket status and priority, and add comments.
+    // Throws early for user experience
+    // Uses try-catchs and confirmation for actions
+    
     private final SupportAgent supportAgent;
 
+    // Constructs a SupportAgentMenu instance
     public SupportAgentMenu(SupportAgent supportAgent, Scanner input, Repository repository) {
         super(supportAgent, input, repository);
         this.supportAgent = supportAgent;
     }
 
+    // Displays the support agent menu options
     @Override
     protected void displayMenu() {
         printHeader("SUPPORTAGENT MENU");
@@ -1832,16 +1973,19 @@ public class SupportAgentMenu extends BaseMenu {
         System.out.println("[0] Logout");
     }
 
+    // Returns minimum menu choice
     @Override
     protected int getMinChoice() {
         return 0;
     }
 
+    // Returns maximum menu choice
     @Override
     protected int getMaxChoice() {
         return 5;
     }
 
+    // Executes the selected support agent menu choice[cite: 1]
     @Override
     protected void executeChoice(int choice) {
         switch (choice) {
@@ -1854,6 +1998,7 @@ public class SupportAgentMenu extends BaseMenu {
         }
     }
 
+    // Handles viewing assigned tickets
     public void viewAssignedTickets() {
         while (true) {
             ArrayList<Ticket> tickets = supportAgent.getTickets();
@@ -1879,6 +2024,7 @@ public class SupportAgentMenu extends BaseMenu {
         }
     }
 
+    // Handles viewing detailed information for a specific ticket
     public void viewTicketDetails() {
         printHeader("View Ticket Details");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -1891,6 +2037,7 @@ public class SupportAgentMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles updating a ticket's state 
     public void updateTicketState() {
         printHeader("Update Ticket Status");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -1913,6 +2060,7 @@ public class SupportAgentMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles updating a ticket's priority 
     public void updateTicketPriority() {
         printHeader("Update Ticket Priority");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -1934,6 +2082,7 @@ public class SupportAgentMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Handles adding a comment to an assigned ticket
     public void addComment() {
         printHeader("Add Comment");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -1949,6 +2098,7 @@ public class SupportAgentMenu extends BaseMenu {
         waitForEnter();
     }
 
+    // Prompts the agent to select an allowed ticket state transition
     private String readAgentState() { 
         while(true) {
             System.out.println("");

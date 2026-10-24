@@ -21,7 +21,7 @@ public abstract class BaseMenu {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final int WIDTH = 60;
     
-    // Constructs a BaseMenu instance[cite: 1]
+    // Constructs a BaseMenu instance
     protected BaseMenu(User user, Scanner input, Repository repository) {
         this.input = input;
         this.user = user;

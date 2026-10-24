@@ -45,7 +45,7 @@ public class SupportAgentMenu extends BaseMenu {
         return 5;
     }
 
-    // Executes the selected support agent menu choice[cite: 1]
+    // Executes the selected support agent menu choice
     @Override
     protected void executeChoice(int choice) {
         switch (choice) {

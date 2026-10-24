@@ -174,7 +174,7 @@ public class AdminMenu extends BaseMenu {
         waitForEnter();
     }
 
-    // Handles reassigning a ticket to another agent[cite: 1]
+    // Handles reassigning a ticket to another agent
     public void reassignTicket() {
         printHeader("Reassign a Ticket");
         String ticketId = readLine("Enter ticket ID: ", false);
@@ -282,7 +282,7 @@ public class AdminMenu extends BaseMenu {
             printError("No users found.");
             return;
         }
-        System.out.printf("%-10s | %-13s | %-20s | %s%n ", "ID", "Role", "Name", "Email");
+        System.out.printf("%-10s | %-13s | %-20s | %s%n", "ID", "Role", "Name", "Email");
         System.out.println("-".repeat(90));
         for (User u : users) {
             if (u == null) {
