@@ -70,12 +70,12 @@ public class CampusHelpDeskTicketingSystem {
 
         if (repo == null) { return; }
 
-        Admin admin = new Admin("ACC-001", "Alice", "Admin", "alice@univ.edu", "pass", repo, "EMP-100", "IT", "ext111");
-        Student student1 = new Student("ACC-002", "David", "Santos", "david@univ.edu", "pass", repo, "S-001", "BSCS", 3, "3A");
-        Faculty faculty1 = new Faculty("ACC-003", "Eve", "Lopez", "eve@univ.edu", "pass", repo, "F-001", "CS Dept", "Professor", "ext301");
+        Admin admin = new Admin("ACC-001", "Kean", "Danganan", "alice@univ.edu", "pass", repo, "EMP-100", "IT", "ext111");
+        Student student1 = new Student("ACC-002", "Pauleen", "Mendoza", "david@univ.edu", "pass", repo, "S-001", "BSCS", 3, "3A");
+        Faculty faculty1 = new Faculty("ACC-003", "Grace", "Mendiola", "eve@univ.edu", "pass", repo, "F-001", "CS Dept", "Professor", "ext301");
         
-        SupportAgent agent1 = new SupportAgent("ACC-004", "Bob", "Builder", "bob@univ.edu", "pass", repo, "EMP-201", "FACILITIES_MAINTENANCE", "ext201");
-        SupportAgent agent2 = new SupportAgent("ACC-005", "Charlie", "Coder", "charlie@univ.edu", "pass", repo, "EMP-202", "FACILITIES_MAINTENANCE", "ext202");
+        SupportAgent agent1 = new SupportAgent("ACC-004", "Ely", "Leonerio", "bob@univ.edu", "pass", repo, "EMP-201", "FACILITIES_MAINTENANCE", "ext201");
+        SupportAgent agent2 = new SupportAgent("ACC-005", "Trisha", "Garcia", "charlie@univ.edu", "pass", repo, "EMP-202", "FACILITIES_MAINTENANCE", "ext202");
         SupportAgent agent3 = new SupportAgent("ACC-006", "Dave", "Debug", "dave@univ.edu", "pass", repo, "EMP-203", "SOFTWARE_SYSTEMS", "ext203");
         SupportAgent agent4 = new SupportAgent("ACC-007", "Nina", "Network", "nina@univ.edu", "pass", repo, "EMP-204", "NETWORK", "ext204");
         SupportAgent agent5 = new SupportAgent("ACC-008", "Hank", "Hardware", "hank@univ.edu", "pass", repo, "EMP-205", "HARDWARE", "ext205");
@@ -92,10 +92,8 @@ public class CampusHelpDeskTicketingSystem {
         repo.addUser(agent6);
 
          Ticket[] samples = {
-            student1.createTicket("HIGH",   "NETWORK",                "Campus Wi-Fi Disconnect",   "Wi-Fi keeps dropping every few minutes in the library 2nd floor."),
-            student1.createTicket("MEDIUM", "SOFTWARE_SYSTEMS",       "LMS / Portal Issue",        "I can't open the course page for CS 101 in the LMS."),
-            faculty1.createTicket("MEDIUM", "SOFTWARE_SYSTEMS",       "Software Installation",     "Need the latest statistics software installed on my office PC."),
-            faculty1.createTicket("MEDIUM", "NETWORK",                "VPN Connection",            "VPN disconnects when I try to access the faculty drive from home.")
+            student1.createTicket("HIGH",   "FACILITIES_MAINTENANCE",                "Plumbing and leaks",   "Toilet is clogged"),
+            student1.createTicket("MEDIUM", "FACILITIES_MAINTENANCE",       "HVAC and Temperature",        "Aircon is broken."),
         };
         for (Ticket ticket : samples) {
             ticket.autoAssignAgent(repo.getAllUsers());

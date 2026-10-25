@@ -202,7 +202,7 @@ public class AdminMenu extends BaseMenu {
         String ticketId = readLine("Enter ticket ID: ", false);
         try {
             Ticket ticket = admin.getTicket(ticketId);
-            ticket.requireNotFinished();
+            ticket.requireNotDeleted();
             if (confirm("Delete Ticket " + ticket.getTicketId() + "?")) {
                 String reason = readLine("Provide a reason for Deletion: ", false);
                 admin.deleteTicket(ticketId, reason);
@@ -241,8 +241,8 @@ public class AdminMenu extends BaseMenu {
     // Displays formatted details of a specific user
     private void viewUserDetails(User user) {
 
-        System.out.println();
-        System.out.println("======== User " + user.getUserId() + " ========");
+        printHeader(user.getUserId());
+        System.out.println("======== User "  + " ========");
         System.out.printf("%-16s : %s%n", "Full Name", user.getFullName());
         System.out.printf("%-16s : %s%n", "Email", user.getEmail());
         System.out.printf("%-16s : %s%n", "Date Registered", formatDate(user.getDateRegistered()));

@@ -22,7 +22,7 @@ public class Requestor extends User {
         } // Throw an error if you try to acces a ticket that doesnt exist
         if (!ticket.getSubmittedBy().getUserId().equalsIgnoreCase(getUserId())) { 
             throw new SecurityException("Ticket " + ticketId + " is not yours."); 
-        } // Throw an Error if you try to access a ticket that isnt your
+        } // Throw an Error if you try to access a ticket that isnt yours
         return ticket;  
     } 
 

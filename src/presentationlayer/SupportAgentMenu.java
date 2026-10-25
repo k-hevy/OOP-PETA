@@ -69,7 +69,7 @@ public class SupportAgentMenu extends BaseMenu {
             }
 
             printHeader("View Tickets");
-            System.out.println("[1] View all AssignedTickets");
+            System.out.println("[1] View all Assigned Tickets");
             System.out.println("[2] View all Active Tickets");
             System.out.println("[0] Back");
             System.out.println();
