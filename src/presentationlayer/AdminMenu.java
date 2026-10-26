@@ -242,7 +242,6 @@ public class AdminMenu extends BaseMenu {
     private void viewUserDetails(User user) {
 
         printHeader(user.getUserId());
-        System.out.println("======== User "  + " ========");
         System.out.printf("%-16s : %s%n", "Full Name", user.getFullName());
         System.out.printf("%-16s : %s%n", "Email", user.getEmail());
         System.out.printf("%-16s : %s%n", "Date Registered", formatDate(user.getDateRegistered()));

@@ -66,16 +66,18 @@ public class CampusHelpDeskTicketingSystem {
     }
     
     // Receives the a Repository, populates the repository with initial mock data including users, support agents, and sample tickets.
+    // Receives a Repository and populates it with initial mock data: users, support agents, and sample tickets.
     public static void seedData(Repository repo) {
 
         if (repo == null) { return; }
 
-        Admin admin = new Admin("ACC-001", "Kean", "Danganan", "alice@univ.edu", "pass", repo, "EMP-100", "IT", "ext111");
-        Student student1 = new Student("ACC-002", "Pauleen", "Mendoza", "david@univ.edu", "pass", repo, "S-001", "BSCS", 3, "3A");
-        Faculty faculty1 = new Faculty("ACC-003", "Grace", "Mendiola", "eve@univ.edu", "pass", repo, "F-001", "CS Dept", "Professor", "ext301");
-        
-        SupportAgent agent1 = new SupportAgent("ACC-004", "Ely", "Leonerio", "bob@univ.edu", "pass", repo, "EMP-201", "FACILITIES_MAINTENANCE", "ext201");
-        SupportAgent agent2 = new SupportAgent("ACC-005", "Trisha", "Garcia", "charlie@univ.edu", "pass", repo, "EMP-202", "FACILITIES_MAINTENANCE", "ext202");
+        Student student1 = new Student("ACC-001", "Pauleen", "Mendoza", "pauleen@univ.edu", "pass", repo, "S-001", "BSCS", 3, "3A");
+        SupportAgent agent1 = new SupportAgent("ACC-002", "Ely", "Leonerio", "ely@univ.edu", "pass", repo, "EMP-201", "FACILITIES_MAINTENANCE", "ext201");
+        Admin admin = new Admin("ACC-003", "Kean", "Danganan", "kean@univ.edu", "pass", repo, "EMP-100", "IT", "ext111");
+
+        SupportAgent agent2 = new SupportAgent("ACC-004", "Trisha", "Garcia", "trisha@univ.edu", "pass", repo, "EMP-202", "FACILITIES_MAINTENANCE", "ext202");
+        Faculty faculty1 = new Faculty("ACC-005", "Grace", "Mendiola", "grace@univ.edu", "pass", repo, "F-001", "CS Dept", "Professor", "ext301");
+
         SupportAgent agent3 = new SupportAgent("ACC-006", "Dave", "Debug", "dave@univ.edu", "pass", repo, "EMP-203", "SOFTWARE_SYSTEMS", "ext203");
         SupportAgent agent4 = new SupportAgent("ACC-007", "Nina", "Network", "nina@univ.edu", "pass", repo, "EMP-204", "NETWORK", "ext204");
         SupportAgent agent5 = new SupportAgent("ACC-008", "Hank", "Hardware", "hank@univ.edu", "pass", repo, "EMP-205", "HARDWARE", "ext205");
@@ -91,16 +93,23 @@ public class CampusHelpDeskTicketingSystem {
         repo.addUser(agent5);
         repo.addUser(agent6);
 
-         Ticket[] samples = {
-            student1.createTicket("HIGH",   "FACILITIES_MAINTENANCE",                "Plumbing and leaks",   "Toilet is clogged"),
-            student1.createTicket("MEDIUM", "FACILITIES_MAINTENANCE",       "HVAC and Temperature",        "Aircon is broken."),
+        Ticket[] samples = {
+            student1.createTicket("HIGH",   "FACILITIES_MAINTENANCE", "Plumbing and leaks",     "Toilet is clogged."),
+            student1.createTicket("MEDIUM", "FACILITIES_MAINTENANCE", "HVAC and Temperature",   "Aircon is broken.")
         };
+
+        // Assign first: TK-001 goes to Ely, then TK-002 goes to Trisha because Ely now has an active ticket
         for (Ticket ticket : samples) {
             ticket.autoAssignAgent(repo.getAllUsers());
             repo.addTicket(ticket);
         }
 
-        
+        // Resolve second: this must be a separate loop, or Ely's active count drops and TK-002 also goes to Ely
+        for (Ticket ticket : samples) {
+            SupportAgent agent = ticket.getAssignedAgent();
+            agent.updateTicketState(ticket.getTicketId(), "IN_PROGRESS", "Started working on the issue");
+            agent.updateTicketState(ticket.getTicketId(), "RESOLVED", "Issue fixed");
+        }
     }
 
 }
